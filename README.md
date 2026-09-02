@@ -97,21 +97,6 @@ stateDiagram-v2
 
 The user can update the application status and view their applications from the dashboard.
 
-### Complete MVP Flow
-
-```mermaid
-flowchart TD
-    A[Create Account] --> B[Add Resume]
-    B --> C[Add Target Job]
-    C --> D[Job Analysis]
-    D --> E[Review Skills & Gaps]
-    E --> F[Interview Preparation]
-    F --> G[Practice Questions]
-    C --> H[Application Tracking]
-    G --> H
-    H --> I[Track Progress]
-```
-
 ### MVP Outcome
 
 For each target job, the user should have a single workspace containing:
@@ -297,6 +282,7 @@ erDiagram
 
     USER {
         int id
+        string name
         string email
     }
 
