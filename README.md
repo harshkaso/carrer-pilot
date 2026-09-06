@@ -300,6 +300,7 @@ erDiagram
         int job_posting_id
         string status
         datetime created_at
+        datetime updated_at
     }
 
     JOB_ANALYSIS {
