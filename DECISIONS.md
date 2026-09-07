@@ -275,11 +275,142 @@ CareerPilot's MVP.
 
 ### Consequences
 
-* The frontend codebase will use `.ts` and `.tsx` files.
-* Developers working on the project will need a basic understanding of
+- The frontend codebase will use `.ts` and `.tsx` files.
+- Developers working on the project will need a basic understanding of
   TypeScript.
-* API contracts should be represented with appropriate TypeScript types.
-* The frontend and backend can evolve independently as long as their API
+- API contracts should be represented with appropriate TypeScript types.
+- The frontend and backend can evolve independently as long as their API
   contract remains compatible.
-* The project gains the benefits of static typing but introduces the
+- The project gains the benefits of static typing but introduces the
   additional concepts and tooling associated with TypeScript.
+
+## ADR-005: Use Django's Built-in User Model
+
+### Status
+
+Accepted
+
+### Context
+
+CareerPilot requires users to own resources such as job applications. Django provides a built-in authentication and user model that already supports common user attributes and authentication functionality.
+
+The MVP does not currently require custom authentication fields or behavior that would justify introducing a custom user model.
+
+### Decision
+
+Use Django's built-in `User` model for CareerPilot's MVP.
+
+Application-specific models that belong to a user will reference `django.contrib.auth.models.User` using a foreign key.
+
+#### Guidelines
+
+- Use Django's built-in `User` model for MVP user accounts.
+- Do not create a custom user model unless future requirements demonstrate a clear need for one.
+- Use Django's built-in authentication mechanisms where applicable.
+- Keep application-specific user data in application models rather than modifying the built-in user model.
+
+### Rationale
+
+Django's built-in user model provides the authentication and user management functionality required by the MVP without introducing unnecessary complexity.
+
+Using the built-in model also keeps the initial architecture simple and allows development to focus on CareerPilot's core functionality.
+
+### Alternatives Considered
+
+#### Custom User Model
+
+A custom user model would provide greater control over user fields and authentication behavior. However, the MVP does not currently require that flexibility, and introducing a custom model would add unnecessary complexity.
+
+### Consequences
+
+- `JobApplication` will reference Django's built-in `User` model.
+- CareerPilot will use Django's existing authentication infrastructure.
+- Future requirements that require custom user behavior may require revisiting this decision.
+
+## ADR-006: Model Job Applications and Job Postings as Separate Entities
+
+### Status
+
+Accepted
+
+### Context
+
+CareerPilot needs to store job postings and track a user's application to those postings.
+
+A job posting contains information about the position itself, while a job application represents a user's relationship with that posting and its current application status.
+
+These are separate concepts with different lifecycles and responsibilities.
+
+### Decision
+
+Represent `JobPosting` and `JobApplication` as separate Django models.
+
+`JobApplication` will reference both the owning `User` and the related `JobPosting` using foreign key relationships.
+
+#### Guidelines
+
+- Store job information in `JobPosting`.
+- Store application-specific information in `JobApplication`.
+- Do not duplicate job-posting fields inside `JobApplication`.
+- Use foreign keys to represent the relationships between entities.
+- Keep application status associated with `JobApplication`, not `JobPosting`.
+
+### Rationale
+
+Separating the two entities provides a clearer domain model and avoids duplicating job-posting information.
+
+It also allows application-specific state, such as `saved`, `applied`, or `interview`, to remain independent from the underlying job posting.
+
+### Consequences
+
+- `JobPosting` and `JobApplication` have separate database tables.
+- A `JobApplication` references a `JobPosting`.
+- A `JobApplication` also references the owning `User`.
+- Job-posting data can be reused by application records without duplication.
+- Deleting a `JobPosting` currently cascades to its related `JobApplication` records.
+
+## ADR-007: Represent Application Status Using Django TextChoices
+
+### Status
+
+Accepted
+
+### Context
+
+CareerPilot needs to track the lifecycle of a job application.
+
+The application status must be restricted to a known set of values so that invalid or inconsistent states cannot be stored.
+
+### Decision
+
+Represent `JobApplication.status` using Django's `TextChoices`.
+
+The MVP will support the following statuses:
+
+* `saved`
+* `applied`
+* `interview`
+* `offer`
+* `rejected`
+
+#### Guidelines
+
+- Define application statuses using `models.TextChoices`.
+- Store the machine-readable value in the database.
+- Use Django's display labels for human-readable status values.
+- Do not use arbitrary strings for application status.
+- Add new statuses only when the application's domain requirements justify them.
+
+### Rationale
+
+`TextChoices` provides a clear set of allowed status values while integrating with Django's model validation and display functionality.
+
+It also keeps the status values and their human-readable labels together in the model definition.
+
+### Consequences
+
+- Invalid status values can be detected through Django's model validation.
+- API and frontend code can rely on a defined set of application statuses.
+- Adding or changing statuses requires updating the model definition and potentially the frontend API types.
+- Application lifecycle behavior can be extended later without changing the underlying relationship between users, applications, and job postings.
+
