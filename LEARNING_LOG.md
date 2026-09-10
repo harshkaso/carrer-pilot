@@ -159,7 +159,7 @@ A single Django project can contain multiple Django apps.
 
 #### Typical Structure
 
-```text
+```shell
 myproject/
 ├── manage.py
 │
@@ -182,7 +182,7 @@ myproject/
 
 For CareerPilot:
 
-```text
+```shell
 careerpilot/
 └── backend/
     ├── manage.py
@@ -220,7 +220,7 @@ After creating an app, Django needs to know that the app is part of the project.
 
 Open:
 
-```text
+```shell
 backend/config/settings.py
 ```
 
@@ -261,7 +261,7 @@ Each Django app can contain multiple models.
 
 For CareerPilot:
 
-```text
+```shell
 backend/jobs/models.py
 ```
 
@@ -316,7 +316,7 @@ class JobApplication(models.Model):
         return f"{self.job_posting} — {self.get_status_display()}"
 ```
 
-> **Note:** CareerPilot will eventually associate `JobApplication` with Django's built-in `User` model. That relationship should be added before implementing authenticated application tracking.
+> [!NOTE] CareerPilot will eventually associate `JobApplication` with Django's built-in `User` model. That relationship should be added before implementing authenticated application tracking.
 
 ---
 
@@ -362,7 +362,7 @@ job_posting = models.ForeignKey(
 
 means:
 
-```text
+```shell
 JobPosting
     │
     │ 1 → many
@@ -376,7 +376,7 @@ One job posting can have multiple applications.
 
 `CASCADE` means:
 
-```text
+```shell
 Delete JobPosting
        ↓
 Delete related JobApplications
@@ -384,7 +384,7 @@ Delete related JobApplications
 
 It does **not** mean:
 
-```text
+```shell
 Delete JobApplication
        ↓
 Delete JobPosting
@@ -414,7 +414,7 @@ Django generates migration files containing instructions for changing the databa
 
 For example:
 
-```text
+```shell
 jobs/migrations/0001_initial.py
 ```
 
@@ -436,7 +436,7 @@ uv run python manage.py showmigrations
 
 Expected output includes:
 
-```text
+```shell
 jobs
  [X] 0001_initial
 ```
@@ -459,7 +459,7 @@ Examples include:
 
 Typical workflow:
 
-```text
+```shell
 Modify models.py
        ↓
 makemigrations
@@ -481,7 +481,7 @@ It allows us to perform CRUD operations without building a custom management UI.
 
 Open:
 
-```text
+```shell
 backend/jobs/admin.py
 ```
 
@@ -522,7 +522,7 @@ uv run python manage.py createsuperuser
 
 Django will interactively ask for:
 
-```text
+```shell
 Username:
 Email address:
 Password:
@@ -547,7 +547,7 @@ uv run python manage.py runserver
 
 Open:
 
-```text
+```shell
 http://127.0.0.1:8000/admin/
 ```
 
@@ -655,7 +655,7 @@ JobPosting.objects.count()
 
 Expected:
 
-```text
+```shell
 5
 ```
 
@@ -667,7 +667,7 @@ JobApplication.objects.count()
 
 Expected:
 
-```text
+```shell
 5
 ```
 
@@ -691,7 +691,7 @@ CareerPilot needs DRF so that the React frontend can communicate with the Django
 
 The architecture becomes:
 
-```text
+```shell
 React + TypeScript
        │
        │ HTTP / JSON
@@ -715,7 +715,7 @@ uv add djangorestframework
 
 Register it in:
 
-```text
+```shell
 backend/config/settings.py
 ```
 
@@ -737,7 +737,7 @@ Serializers also handle **deserialization**, allowing incoming data to be valida
 
 Create:
 
-```text
+```shell
 backend/jobs/serializers.py
 ```
 
@@ -828,7 +828,7 @@ For CareerPilot, we use:
 
 Create/update:
 
-```text
+```shell
 backend/jobs/views.py
 ```
 
@@ -887,7 +887,7 @@ This helps avoid unnecessary database queries when serializing the nested job po
 
 At this stage, CareerPilot supports:
 
-```text
+```shell
 GET  /api/applications/
 GET  /api/applications/?status=saved
 
@@ -905,7 +905,7 @@ The goal is to create a thin vertical slice rather than a complete CRUD API.
 
 Create:
 
-```text
+```shell
 backend/jobs/urls.py
 ```
 
@@ -934,7 +934,7 @@ urlpatterns = [
 
 Then modify:
 
-```text
+```shell
 backend/config/urls.py
 ```
 
@@ -951,7 +951,7 @@ urlpatterns = [
 
 The resulting API is:
 
-```text
+```shell
 /api/job-postings/
 /api/applications/
 /api/applications/?status=saved
@@ -969,7 +969,7 @@ uv run python manage.py runserver
 
 Test:
 
-```text
+```shell
 http://127.0.0.1:8000/api/applications/?status=saved
 ```
 
@@ -977,7 +977,7 @@ The endpoint should return the saved applications from the database.
 
 Also test:
 
-```text
+```shell
 http://127.0.0.1:8000/api/job-postings/
 ```
 
@@ -1006,7 +1006,7 @@ Instead of introducing CORS configuration immediately, Vite can proxy `/api` req
 
 Open:
 
-```text
+```shell
 frontend/vite.config.ts
 ```
 
@@ -1050,7 +1050,7 @@ This keeps the frontend independent of the backend's development hostname.
 
 Create:
 
-```text
+```shell
 frontend/src/types/job.ts
 ```
 
@@ -1094,7 +1094,7 @@ API calls should not be scattered throughout React components.
 
 Create:
 
-```text
+```shell
 frontend/src/api/jobs.ts
 ```
 
@@ -1151,7 +1151,7 @@ export async function createJobPosting(
 
 This creates a clean boundary:
 
-```text
+```shell
 React Component
        ↓
 src/api/jobs.ts
@@ -1169,7 +1169,7 @@ Database
 
 Create:
 
-```text
+```shell
 frontend/src/pages/SavedApplicationsPage.tsx
 ```
 
@@ -1280,7 +1280,7 @@ It also performs the first real frontend → backend `GET` request.
 
 Create:
 
-```text
+```shell
 frontend/src/components/JobPostingForm.tsx
 ```
 
@@ -1431,7 +1431,7 @@ For Day 2, React Router is not necessary yet.
 
 Use the components directly in:
 
-```text
+```shell
 frontend/src/App.tsx
 ```
 
@@ -1458,7 +1458,7 @@ export default App;
 
 Later, when the application has multiple screens, React Router can provide routes such as:
 
-```text
+```shell
 /applications
 /jobs/new
 ```
@@ -1489,7 +1489,7 @@ npm run dev
 
 Open the Vite development URL:
 
-```text
+```shell
 http://localhost:5173
 ```
 
@@ -1506,7 +1506,7 @@ The frontend should now:
 
 The complete Day 2 flow is:
 
-```text
+```shell
                     CareerPilot
                          │
                          ▼
@@ -1529,7 +1529,7 @@ The complete Day 2 flow is:
 
 For the saved applications flow:
 
-```text
+```shell
 SavedApplicationsPage
         │
         ▼
@@ -1554,7 +1554,7 @@ Rendered applications
 
 For creating a job posting:
 
-```text
+```shell
 JobPostingForm
       │
       ▼
@@ -1625,7 +1625,7 @@ The main lesson from Day 2 is:
 
 > **Keep responsibilities separated.**
 
-```text
+```shell
 React
   → presentation and user interaction
 
@@ -1649,3 +1649,1392 @@ Database
 ```
 
 This separation will make CareerPilot easier to extend when authentication, application tracking, job analysis, and interview preparation are introduced later.
+
+## Day 3 - PostgreSQL & Django REST Framework
+
+### PostgreSQL Setup
+To keep the development environment reproducible, we will use Docker to setup a local PostgreSQL instance.
+
+### 1. Check whether Docker is available
+```shell
+docker --version
+```
+and: 
+```shell
+docker compose version
+```
+if both work, we can continue
+
+### 2. Create `docker-compose.yml` at the root of project
+```shell
+careerpilot/
+├── backend/
+├── frontend/
+├── docker-compose.yml
+└── ...
+```
+Create:
+```yaml
+services:
+    db:
+        image: postgres:18
+        container_name: careerpilot-db
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: careerpilot
+            POSTGRES_USER: careerpilot
+            POSTGRESS_PASSWORD: careerpilot
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+volumes:
+    postgres_data:
+```
+
+### 3. Start PostgreSQL
+
+From project root
+```shell
+docker compose up -d db
+```
+
+Check that it's running:
+```shell
+docker compose ps
+```
+
+```shell
+NAME             STATUS
+careerpilot-db   Up
+```
+
+We can also check the PostgreSQL logs:
+```shell
+docker compose logs db
+```
+Look for something indicating that PostgreSQL is ready to accept connections.
+
+### Review
+
+Now we have:
+```shell
+PostgreSQL server
+        │
+        └── Database: careerpilot
+                │
+                ├── User: careerpilot
+                └── Password: careerpilot
+```
+And Docker exposes PostgreSQL on:
+```shell
+localhost:5432
+```
+Django application will eventually connect using:
+```shell
+Host:     localhost
+Port:     5432
+Database: careerpilot
+User:     careerpilot
+Password: careerpilot
+```
+
+### 5. Connecting Django with PostgreSQL
+
+So far, Django is still using SQLite setup on day 1. Now that we have PostgreSQL up and running, lets configure Django backend to use it
+
+We will need PostgreSQL drivers:
+```shell
+cd backend
+uv add 'psycopg[binary]'
+```
+
+Then update `backend/config/settings.py`.\
+Replace the current `DATABASES` configuration with:
+
+```python
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "careerpilot",
+        "USER": "careerpilot",
+        "PASSWORD": "careerpilot",
+        "HOST": "localhost",
+        "PORT": "5432",
+    }
+}
+```
+> [!WARNING] For now, local development credentials are hardcoded. Later, we'll move these into environment variables.
+
+### 6. Run Migrations
+Since we made changes to the Django database config, need to migrate those changes to actual database. This will connect all previous django work (models, serializers, views) to PostgreSQL.
+
+Run:
+```shell
+uv run python manage.py migrate
+```
+Django will create its tables in PostgreSQL, including things like:
+```shell
+auth_user
+django_admin_log
+django_content_type
+django_migrations
+django_session
+```
+and application table:
+```shell
+jobs_jobposting
+jobs_jobapplication
+```
+No need to write SQL such as:
+```sql
+CREATE TABLE jobs_jobposting ...
+```
+Django generates the SQL from the models.
+
+### 7. Verify the database
+You can connect directly to PostgreSQL:
+```shell
+docker exec -it careerpilot-db psql -U careerpilot -d careerpilot
+```
+> [!TIP]
+> Breakdown:
+>
+> - `docker exec` — runs a command inside an existing container.
+> - `-i` — keeps standard input open so you can type commands.
+> - `-t` — allocates a terminal interface. Together, `-it` makes it interactive.
+> - `careerpilot-db` — the target container’s name.
+> - `psql` — PostgreSQL’s command-line client.
+> - `-U` careerpilot — connects as the PostgreSQL user careerpilot.
+> - `-d` careerpilot — connects to the database named careerpilot.
+
+Then:
+to list the tables in the current database schema, usually the `public` schema.
+```shell
+\dt
+```
+Output should be somthing like
+```shell
+                 List of relations
+ Schema |          Name
+--------+--------------------------
+ public | auth_group
+ public | auth_permission
+ public | auth_user
+ public | django_admin_log
+ public | django_content_type
+ public | django_migrations
+ public | django_session
+ public | jobs_jobapplication
+ public | jobs_jobposting
+ ```
+
+ Exit with:
+ ```shell
+ \q
+ ```
+
+ ### SQL
+
+ >[!NOTE] This step is to understand/learn SQL independently of Django.
+
+#### 1. SQL to create `user`, `job_postings` and `applications` table 
+```sql
+-- Write SQL to create `users`, `job_postings`, and `applications`.
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE job_postings (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    company VARCHAR(255) NOT NULL,
+    url TEXT NOT NULL,
+    description TEXT NOT NULL
+);
+
+CREATE TABLE applications (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    job_posting_id INT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'saved',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_applications_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+    
+    CONSTRAINT fk_applications_job_posting
+        FOREIGN KEY (job_posting_id)
+        REFERENCES job_postings(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT applications_status_check
+        CHECK(
+            status IN (
+                'saved',
+                'applied',
+                'interview',
+                'offer',
+                'rejectted'
+            )
+        )
+);
+```
+Verify:
+
+```sql
+\dt
+```
+
+You should see:
+
+```shell
+ applications
+ job_postings
+ users
+```
+
+Then check the structure:
+
+```sql
+\d users
+\d job_postings
+\d applications
+```
+
+
+#### 2. SQL query returning every application with company name, job title, and current status.
+```sql
+-- Write a query returning every application with company name, job title, and current status.
+
+SELECT 
+    applications.id,
+    job_postings.company,
+    job_postings.title AS job_title,
+    applications.status
+FROM applications
+JOIN users
+    ON applications.user_id = users.id
+JOIN job_postings
+    on applications.job_posting_id = job_postings.id;
+```
+
+The `applications` table contains IDs:
+
+```shell
+user_id
+job_posting_id
+```
+
+Those IDs allow us to connect the tables.
+
+```shell
+applications.user_id
+        ↓
+users.id
+
+applications.job_posting_id
+        ↓
+job_postings.id
+```
+
+This is the core purpose of a **foreign key**.
+
+#### 3. SQL query returning number of applications grouped by status.
+```sql
+-- Write a query returning the number of applications grouped by status.
+
+SELECT
+  status,
+  COUNT(*) AS application_count
+FROM applications
+GROUP BY status
+ORDER BY application_count DESC;
+```
+Example result:
+
+```shell
+ status       | application_count
+--------------+------------------
+ applied      | 5
+ saved        | 3
+ rejected     | 2
+ interview    | 1
+ offer        | 1
+```
+
+The important concept is:
+
+```sql
+GROUP BY status
+```
+
+means:
+
+> Put rows having the same status into the same group.
+
+Then:
+
+```sql
+COUNT(*)
+```
+
+counts the rows in each group.
+
+#### 4. SQL returning companies with more than 2 applications
+This introduces `HAVING`.
+
+```sql
+SELECT
+    job_postings.company,
+    COUNT(applications.id) AS application_count
+FROM applications
+JOIN job_postings
+    ON applications.job_posting_id = job_postings.id
+GROUP BY job_postings.company
+HAVING COUNT(applications.id) > 2
+ORDER BY application_count DESC;
+```
+
+##### `WHERE` vs `HAVING`
+
+This is an important interview question.
+
+**WHERE filters rows before grouping:**
+
+```sql
+WHERE status = 'applied'
+```
+
+**HAVING filters groups after grouping:**
+
+```sql
+HAVING COUNT(*) > 2
+```
+
+A useful mental model:
+
+```shell
+FROM
+ ↓
+JOIN
+ ↓
+WHERE
+ ↓
+GROUP BY
+ ↓
+HAVING
+ ↓
+SELECT
+ ↓
+ORDER BY
+```
+
+#### 5. SQL query returning the most recently added job for each company.
+First, we need a timestamp on `job_postings`.
+
+Your current table doesn't have one, so for this SQL exercise add it:
+
+```sql
+ALTER TABLE job_postings
+ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+```
+
+Now the query can use `created_at`.
+
+A PostgreSQL-friendly solution is:
+
+```sql
+SELECT DISTINCT ON (company)
+    id,
+    company,
+    title,
+    url,
+    created_at
+FROM job_postings
+ORDER BY company, created_at DESC;
+```
+
+##### Why this works
+
+For each company:
+
+```shell
+company
+   ↓
+sort newest → oldest
+   ↓
+take first row
+```
+
+`DISTINCT ON (company)` tells PostgreSQL to keep one row per company.
+
+The important part is:
+
+```sql
+ORDER BY company, created_at DESC
+```
+
+Without the correct ordering, PostgreSQL cannot know which row you want to keep.
+
+##### Interview note
+
+`DISTINCT ON` is PostgreSQL-specific.
+
+A more portable SQL approach uses a window function:
+
+```sql
+SELECT
+    id,
+    company,
+    title,
+    url,
+    created_at
+FROM (
+    SELECT
+        id,
+        company,
+        title,
+        url,
+        created_at,
+        ROW_NUMBER() OVER (
+            PARTITION BY company
+            ORDER BY created_at DESC
+        ) AS row_num
+    FROM job_postings
+) jobs
+WHERE row_num = 1;
+```
+
+#### 6. Database concepts
+
+This is the final Day 3 SQL task.
+
+##### Primary Key
+
+A primary key uniquely identifies a row.
+
+```sql
+id SERIAL PRIMARY KEY
+```
+
+For example:
+
+```shell
+users
+
+id | name
+---+------
+1  | Alice
+2  | Bob
+3  | Charlie
+```
+
+`id` uniquely identifies each user.
+
+Properties:
+
+- unique
+    
+- cannot be `NULL`
+    
+- identifies a row
+    
+
+---
+
+##### Foreign Key
+
+A foreign key creates a relationship between tables.
+
+```sql
+user_id INTEGER REFERENCES users(id)
+```
+
+For example:
+
+```shell
+applications
+id | user_id
+---+--------
+1  | 2
+2  | 1
+3  | 2
+```
+
+`user_id = 2` means the application belongs to:
+
+```shell
+users.id = 2
+```
+
+Interview answer:
+
+> "A foreign key is a column that references a primary key or unique key in another table and helps maintain referential integrity."
+
+---
+
+##### Unique Constraint
+
+A unique constraint prevents duplicate values.
+
+We used:
+
+```sql
+email VARCHAR(255) UNIQUE
+```
+
+This means:
+
+```shell
+alice@example.com
+alice@example.com
+```
+
+cannot appear twice.
+
+Primary key vs unique:
+
+||Primary Key|Unique|
+|---|---|---|
+|Identifies row|Yes|Not necessarily|
+|Allows NULL|No|PostgreSQL allows NULL|
+|Multiple per table|No|Yes|
+|Example|`id`|`email`|
+
+---
+
+##### Index
+
+An index makes searching/sorting certain columns faster.
+
+Example:
+
+```sql
+CREATE INDEX idx_applications_status
+ON applications(status);
+```
+
+Now queries such as:
+
+```sql
+SELECT *
+FROM applications
+WHERE status = 'interview';
+```
+
+can potentially use that index.
+
+The trade-off:
+
+```shell
+Index
+  ↓
+Faster reads
+  +
+More storage
+  +
+Slightly slower INSERT/UPDATE/DELETE
+```
+
+Interview answer:
+
+> "An index is a data structure that improves query performance for searches on indexed columns, at the cost of additional storage and write overhead."
+
+You don't need to blindly index every column.
+
+---
+
+##### Normalization
+
+Normalization means organizing data to **reduce unnecessary duplication and maintain consistency**.
+
+Bad design:
+
+```shell
+applications
+
+id | user_name | user_email | company | job_title | status
+```
+
+If someone applies to five jobs, their name and email are repeated five times.
+
+Instead:
+
+```shell
+users
+-----
+id
+name
+email
+
+job_postings
+------------
+id
+company
+title
+
+applications
+------------
+id
+user_id
+job_posting_id
+status
+```
+
+Now information has a single source of truth.
+
+Think:
+
+```shell
+User information
+       ↓
+     users
+
+Job information
+       ↓
+ job_postings
+
+Application-specific information
+       ↓
+ applications
+```
+
+For your interview, understand **1NF, 2NF, and 3NF at a conceptual level**, but don't spend a large amount of Day 3 time memorizing formal definitions.
+
+---
+
+##### Transaction
+
+A transaction groups multiple database operations into one logical unit.
+
+For example:
+
+```sql
+BEGIN;
+
+INSERT INTO job_postings (
+    title,
+    company,
+    url,
+    description
+)
+VALUES (
+    'Software Developer',
+    'Example Corp',
+    'https://example.com/job',
+    'Python backend developer'
+);
+
+INSERT INTO applications (
+    user_id,
+    job_posting_id,
+    status
+)
+VALUES (
+    1,
+    1,
+    'saved'
+);
+
+COMMIT;
+```
+
+If something goes wrong:
+
+```sql
+ROLLBACK;
+```
+
+The key idea:
+
+```shell
+BEGIN
+  ↓
+operation 1
+  ↓
+operation 2
+  ↓
+operation 3
+  ↓
+COMMIT
+```
+
+Either the transaction succeeds, or you can roll it back.
+
+Interview answer:
+
+> "A transaction is a group of database operations treated as a single logical unit. If the operations succeed, we commit them; if something fails, we can roll them back."
+
+This is closely related to **ACID**:
+
+```shell
+A — Atomicity
+C — Consistency
+I — Isolation
+D — Durability
+```
+
+### Django REST Framework (DRF)
+
+We have already setup DRF, serializer and views for the following APIs earlier.
+```shell
+GET  /api/applications/
+GET  /api/applications/?status=saved
+
+GET  /api/job-postings/
+POST /api/job-postings/
+```
+today we will make some changes to these APIs and add a few more.
+
+The goal is to build a complete CRUD API for jobs:
+
+```shell
+GET    /api/jobs/           → list jobs
+POST   /api/jobs/           → create job
+GET    /api/jobs/<id>/      → get one job
+PATCH  /api/jobs/<id>/      → update one job
+DELETE /api/jobs/<id>/      → delete one job
+```
+
+#### Views
+> [!NOTE] 
+> We have already implemented model `JobPosting` and serializer class `JobPostingSerializer`. 
+
+No changes are required in model and serializer. So we can skip and focus on view now.
+
+Replace/create:
+
+```shell
+backend/jobs/views.py
+```
+
+with:
+
+```python
+from rest_framework import generics
+
+from .models import JobPosting
+from .serializers import JobPostingSerializer
+
+
+class JobListCreateView(generics.ListCreateAPIView):
+    queryset = JobPosting.objects.all()
+    serializer_class = JobPostingSerializer
+
+
+class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = JobPosting.objects.all()
+    serializer_class = JobPostingSerializer
+```
+##### `ListCreateAPIView`
+
+```python
+class JobListCreateView(generics.ListCreateAPIView):
+```
+
+automatically gives us:
+
+```shell
+GET  /api/jobs/
+POST /api/jobs/
+```
+
+##### `RetrieveUpdateDestroyAPIView`
+
+```python
+class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
+```
+
+automatically gives us:
+
+```shell
+GET    /api/jobs/<id>/ # Retrieve
+PATCH  /api/jobs/<id>/ # Update
+DELETE /api/jobs/<id>/ # Destroy
+```
+
+So we don't need to write five separate view functions.
+
+#### URLs
+
+Create:
+
+```shell
+backend/jobs/urls.py
+```
+
+```python
+from django.urls import path
+
+from .views import JobDetailView, JobListCreateView
+
+
+urlpatterns = [
+    path(
+        "jobs/",
+        JobListCreateView.as_view(),
+        name="job-list-create",
+    ),
+    path(
+        "jobs/<int:pk>/",   # id represents <integer:primary_key>
+        JobDetailView.as_view(),
+        name="job-detail",
+    ),
+]
+```
+
+project URLs:
+
+```shell
+backend/config/urls.py
+```
+
+should contain:
+
+```python
+from django.contrib import admin
+from django.urls import include, path
+
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("api/", include("jobs.urls")),
+]
+```
+
+Now the final routes are:
+
+```shell
+/api/jobs/
+/api/jobs/<id>/
+```
+
+Test `GET /api/jobs/`
+
+Open:
+
+```text
+http://127.0.0.1:8000/api/jobs/
+```
+
+If you have no jobs yet:
+
+```json
+[]
+```
+
+If you have jobs:
+
+```json
+[
+    {
+        "id": 1,
+        "title": "Software Developer",
+        "company": "Acme Corp",
+        "url": "https://example.com/job",
+        "description": "Python developer"
+    }
+]
+```
+
+DRF also gives you a browsable API in the browser, which is very useful while learning.
+
+---
+
+### TESTs
+#### 1. `POST /api/jobs/`
+
+We can use the DRF browsable API or `curl`.
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/jobs/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "title": "Software Developer",
+        "company": "Acme Corp",
+        "url": "https://example.com/jobs/1",
+        "description": "Python and Django developer"
+    }'
+```
+
+Successful creation should return:
+
+```json
+{
+    "id": 1,
+    "title": "Software Developer",
+    "company": "Acme Corp",
+    "url": "https://example.com/jobs/1",
+    "description": "Python and Django developer"
+}
+```
+
+with HTTP status:
+
+```shell
+201 Created
+```
+
+---
+
+#### 2. Validation
+
+Try sending an incomplete request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/jobs/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "title": "Software Developer"
+    }'
+```
+
+DRF should return something similar to:
+
+```json
+{
+    "company": [
+        "This field is required."
+    ],
+    "url": [
+        "This field is required."
+    ],
+    "description": [
+        "This field is required."
+    ]
+}
+```
+
+with:
+
+```shell
+400 Bad Request
+```
+
+That's your serializer-level validation working.
+
+---
+
+#### 3. GET one job
+
+```bash
+curl http://127.0.0.1:8000/api/jobs/1/
+```
+
+Expected:
+```json
+{
+    "id": 1,
+    "title": "Software Developer",
+    "company": "Acme Corp",
+    "url": "https://example.com/jobs/1",
+    "description": "Python and Django developer"
+}
+
+```
+
+```shell
+200 OK
+```
+
+---
+
+#### 4. PATCH
+
+PATCH means:
+
+> Update only the fields I provide.
+
+For example:
+
+```bash
+curl -X PATCH http://127.0.0.1:8000/api/jobs/1/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "title": "Senior Software Developer"
+    }'
+```
+
+You should get:
+
+```json
+{
+    "id": 1,
+    "title": "Senior Software Developer",
+    "company": "Acme Corp",
+    "url": "https://example.com/jobs/1",
+    "description": "Python and Django developer"
+}
+```
+
+Status:
+
+```shell
+200 OK
+```
+
+Notice that you didn't need to send `company`, `url`, or `description`.
+
+That's one reason we're specifically using `PATCH`.
+
+---
+
+#### 5. DELETE
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/jobs/1/
+```
+
+Successful deletion returns:
+
+```shell
+204 No Content
+```
+
+There is normally no JSON response body.
+
+### HTTP status codes
+
+|Operation|Success|Validation|
+|---|--:|--:|
+|GET list|`200 OK`|—|
+|POST|`201 Created`|`400 Bad Request`|
+|GET detail|`200 OK`|`404 Not Found`|
+|PATCH|`200 OK`|`400 Bad Request`|
+|DELETE|`204 No Content`|`404 Not Found`|
+
+For example, requesting:
+
+```shell
+GET /api/jobs/999/
+```
+
+when job `999` doesn't exist should produce:
+
+```shell
+404 Not Found
+```
+
+DRF's generic views handle these responses for you.
+
+---
+
+### Understand what DRF is doing
+
+Architecture is:
+
+```shell
+React
+  │
+  │ HTTP
+  ▼
+DRF View
+  │
+  ▼
+Serializer
+  │
+  ▼
+Django Model
+  │
+  ▼
+Django ORM
+  │
+  ▼
+PostgreSQL
+```
+
+For a POST:
+
+```shell
+POST /api/jobs/
+        │
+        ▼
+JobListCreateView
+        │
+        ▼
+JobPostingSerializer
+        │
+        ├── validation
+        │
+        ▼
+JobPosting.objects.create(...)
+        │
+        ▼
+PostgreSQL
+        │
+        ▼
+201 Created
+```
+
+For a GET:
+
+```shell
+GET /api/jobs/
+        │
+        ▼
+JobListCreateView
+        │
+        ▼
+JobPosting.objects.all()
+        │
+        ▼
+JobPostingSerializer
+        │
+        ▼
+JSON response
+        │
+        ▼
+200 OK
+```
+
+### Frontend
+
+#### 1. Create the API function
+
+We already have `frontend/src/api/jobs.ts`, add:
+
+```ts
+import type { JobPosting } from "../types/job";
+
+export async function getJobs(): Promise<JobPosting[]> {
+    const response = await fetch("/api/jobs/");
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch jobs");
+    }
+
+    return response.json();
+}
+```
+This gives React code a clean function:
+
+```ts
+const jobs = await getJobs();
+```
+
+rather than putting `fetch()` directly inside the component.
+
+---
+
+#### 2. Jobs Page
+`frontend/src/pages/JobsPage.tsx`
+
+```tsx
+import { useEffect, useState } from "react";
+
+import { getJobs } from "../api/jobs";
+import type { JobPosting } from "../types/job";
+
+export function JobsPage() {
+    const [jobs, setJobs] = useState<JobPosting[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function loadJobs() {
+            try {
+                const data = await getJobs();
+                setJobs(data);
+            } catch {
+                setError("Unable to load jobs.");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadJobs();
+    }, []);
+
+    if (loading) {
+        return <p>Loading jobs...</p>;
+    }
+
+    if (error) {
+        return <p>{error}</p>;
+    }
+
+    if (jobs.length === 0) {
+        return (
+            <section>
+                <h1>Jobs</h1>
+                <p>No jobs have been added yet.</p>
+            </section>
+        );
+    }
+
+    return (
+        <section>
+            <h1>Jobs</h1>
+
+            <ul>
+                {jobs.map((job) => (
+                    <li key={job.id}>
+                        <h2>{job.title}</h2>
+                        <p>{job.company}</p>
+                        <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            View job posting
+                        </a>
+                        <p>{job.description}</p>
+                    </li>
+                ))}
+            </ul>
+        </section>
+    );
+}
+```
+
+---
+
+#### 3. Understand the three states
+
+This is the main thing you're learning here.
+
+##### Loading
+
+Immediately when the page opens:
+
+```shell
+React
+  ↓
+GET /api/jobs/
+  ↓
+waiting...
+  ↓
+"Loading jobs..."
+```
+
+That's controlled by:
+
+```tsx
+if (loading) {
+    return <p>Loading jobs...</p>;
+}
+```
+
+##### Error
+
+If Django is unavailable or the request fails:
+
+```shell
+GET /api/jobs/
+       ↓
+    FAILED
+       ↓
+"Unable to load jobs."
+```
+
+Controlled by:
+
+```tsx
+if (error) {
+    return <p>Unable to load jobs.</p>;
+}
+```
+
+##### Empty
+
+The request succeeds, but PostgreSQL contains no jobs:
+
+```json
+[]
+```
+
+That's **not an error**.
+
+It's a successful response containing zero jobs.
+
+So:
+
+```tsx
+if (jobs.length === 0) {
+    return (
+        <section>
+            <h1>Jobs</h1>
+            <p>No jobs have been added yet.</p>
+        </section>
+    );
+}
+```
+
+This distinction is important:
+
+```text
+Loading → request hasn't finished
+Error   → request failed
+Empty   → request succeeded, but there are no records
+Data    → request succeeded and jobs exist
+```
+
+---
+
+## Day 4 React, TypeScript & Job Dashboard
+
+### 1. Target Structure
+
+```text
+frontend/src/
+├── api/
+│   └── jobs.ts
+├── components/
+│   ├── JobCard.tsx
+│   └── JobForm.tsx
+├── hooks/
+│   └── useJobs.ts
+├── pages/
+│   └── JobsPage.tsx
+└── types/
+    └── jobs.ts
+```
+
+The important separation is:
+
+```text
+
+JobCard     → displays one job
+
+JobForm     → collects/validates job data
+
+useJobs()   → manages loading, errors, jobs, API mutations
+
+api/jobs.ts → actually communicates with Django
+```
+
+### 2. Define `Job`, `Application` & `JobStatus`
+
+Repalce `types/jobs.ts` with:
+```ts
+export type JobStatus =
+    | "saved"
+    | "applied"
+    | "interview"
+    | "offer"
+    | "rejected";
+
+export interface Job {
+    id: number;
+    title: string;
+    company: string;
+    url: string;
+    description: string;
+}
+
+export interface Application {
+    id: number;
+    job: Job;
+    status: JobStatus;
+    created_at: string;
+    updated_at: string;
+}
+```

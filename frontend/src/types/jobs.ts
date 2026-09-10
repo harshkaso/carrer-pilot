@@ -1,4 +1,11 @@
-export interface JobPosting {
+export type JobStatus =
+  | "saved"
+  | "applied"
+  | "interview"
+  | "offer"
+  | "rejected";
+
+export interface Job {
   id: number;
   title: string;
   company: string;
@@ -6,10 +13,10 @@ export interface JobPosting {
   description: string;
 }
 
-export interface JobApplication {
+export interface Application {
   id: number;
-  job_posting: JobPosting;
-  status: string;
+  job: Job;
+  status: JobStatus;
   created_at: string;
   updated_at: string;
 }
