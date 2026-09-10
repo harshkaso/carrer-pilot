@@ -1,11 +1,16 @@
 from django.urls import path  # type: ignore
-from .views import JobApplicationListView, JobPostingListCreateView
+from .views import JobApplicationListView, JobListCreateView, JobDetailView
 
 urlpatterns = [
     path(
-        "job-postings/",  # route
-        JobPostingListCreateView.as_view(),  # view
-        name="job-posting-list-create",
+        "jobs/",  # route
+        JobListCreateView.as_view(),  # view
+        name="job-list-create",
+    ),
+    path(
+        "jobs/<int:pk>/",  # /<integer:primary_key>
+        JobDetailView.as_view(),
+        name="job-detail",
     ),
     path(
         "applications/",

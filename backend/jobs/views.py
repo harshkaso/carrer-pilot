@@ -5,14 +5,22 @@ from .models import JobApplication, JobPosting
 from .serializers import JobApplicationSerializer, JobPostingSerializer
 
 
-class JobPostingListCreateView(generics.ListCreateAPIView):  # GET & POST
+# GET | POST /api/job
+class JobListCreateView(generics.ListCreateAPIView):
     # ListCreateAPIView provides the GET (list) and POST (create)
     # behavior, so we only need to configure the queryset and serializer.
     queryset = JobPosting.objects.all()
     serializer_class = JobPostingSerializer
 
 
-class JobApplicationListView(generics.ListAPIView):  # GET /api/applications/
+# GET | PATCH | DELETE /api/job/<id>/
+class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = JobPosting.objects.all()
+    serializer_class = JobPostingSerializer
+
+
+# GET /api/applications/
+class JobApplicationListView(generics.ListAPIView):
     serializer_class = JobApplicationSerializer
 
     def get_queryset(self):

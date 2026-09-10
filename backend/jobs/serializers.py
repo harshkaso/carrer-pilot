@@ -6,7 +6,7 @@ class JobPostingSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPosting
         fields = [
-            "id",  # Django automatically adds a primary-key field `id` in the model if you don't define one yourself.
+            "id",  # Django automatically adds a primary-key field `id` in the model if you haven't define one yourself.
             "title",
             "company",
             "url",
