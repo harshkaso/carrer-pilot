@@ -3011,6 +3011,8 @@ useJobs()   → manages loading, errors, jobs, API mutations
 api/jobs.ts → actually communicates with Django
 ```
 
+---
+
 ### 2. Define `Job`, `Application` & `JobStatus`
 
 Repalce `types/jobs.ts` with:
@@ -3038,3 +3040,979 @@ export interface Application {
     updated_at: string;
 }
 ```
+#### Why `JobStatus`?
+
+Instead of:
+
+```ts
+status: string;
+```
+
+TypeScript now knows that only these values are valid:
+
+```text
+saved
+applied
+interview
+offer
+rejected
+```
+
+For example:
+
+```ts
+const status: JobStatus = "interview";
+```
+
+is valid.
+
+But:
+
+```ts
+const status: JobStatus = "hired";
+```
+
+produces a TypeScript error.
+
+This is particularly useful because these values correspond to your Django `TextChoices`.
+
+---
+
+### 3. Update the API layer
+
+update `api/jobs.ts` to use `Job`, `Application` and `JobStatus`
+
+```ts
+import type { Application, Job } from "../types/jobs";
+
+export async function getSavedApplications(): Promise<Application[]> {
+    const response = await fetch("/api/applications/?status=saved");
+    if (!response.ok) {
+        throw new Error("Failed to fetch saved applications");
+    }   
+    return response.json();
+}
+
+
+export async function getJobs(): Promise<Job[]> {
+    const response = await fetch("/api/jobs/");
+    if (!response.ok) {
+        throw new Error("Failed to fetch jobs")
+    }
+    return response.json();
+}
+
+
+export interface CreateJobInput {
+    title: string;
+    company: string;
+    url: string;
+    description: string;
+}
+
+export async function createJob(job: CreateJobInput): Promise<Job> {
+    const response = await fetch("/api/jobs/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(job),
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to create job");
+    }
+
+    return response.json();
+}
+```
+Don't add validation here yet. The API layer's job is communicating with Django.
+
+---
+
+### 4. Create reusable `JobCard`
+
+Create:
+
+```text
+src/components/JobCard.tsx
+```
+
+```tsx
+import type { Job } from "../types/jobs";
+
+interface JobCardProps {
+    job: Job;
+}
+
+export function JobCard({ job }: JobCardProps) {
+    return (
+        <article>
+            <h2>{job.title}</h2>
+            <p>{job.company}</p>
+
+            <a
+                href={job.url}
+                target="_blank"
+                rel="noreferrer"
+            >
+                View job posting
+            </a>
+        </article>
+    );
+}
+```
+
+The important concept is that `JobCard` doesn't fetch anything.
+
+It simply receives:
+
+```tsx
+<JobCard job={job} />
+```
+
+and displays it.
+
+That's what makes it reusable.
+
+---
+
+### 5. Create reusable `JobForm`
+
+Rename:
+
+```text
+JobPostingForm.tsx
+```
+
+to:
+
+```text
+JobForm.tsx
+```
+
+Then:
+
+```tsx
+import { useState, type SubmitEvent } from "react";
+import { createJob, type CreateJobInput } from "../api/jobs";
+
+interface JobFormProps {
+    onCreated?: (job: Awaited<ReturnType<typeof createJob>>) => void;
+}
+
+interface FormErrors {
+    title?: string;
+    company?: string;
+    url?: string;
+    description?: string;
+    general?: string;
+}
+
+export function JobForm({ onCreated }: JobFormProps) {
+    const [title, setTitle] = useState("");
+    const [company, setCompany] = useState("");
+    const [url, setUrl] = useState("");
+    const [description, setDescription] = useState("");
+
+    const [errors, setErrors] = useState<FormErrors>({});
+    const [submitting, setSubmitting] = useState(false);
+
+    function validate(): FormErrors {
+        const errors: FormErrors = {};
+
+        if (!title.trim()) {
+            errors.title = "Title is required.";
+        }
+
+        if (!company.trim()) {
+            errors.company = "Company is required.";
+        }
+
+        if (!url.trim()) {
+            errors.url = "URL is required.";
+        }
+
+        if (!description.trim()) {
+            errors.description = "Description is required.";
+        }
+
+        return errors;
+    }
+
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        if (submitting) {
+            return;
+        }
+
+        const validationErrors = validate();
+
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
+        setErrors({});
+        setSubmitting(true);
+
+        try {
+            const jobInput: CreateJobInput = {
+                title: title.trim(),
+                company: company.trim(),
+                url: url.trim(),
+                description: description.trim(),
+            };
+
+            const job = await createJob(jobInput);
+
+            onCreated?.(job);
+
+            setTitle("");
+            setCompany("");
+            setUrl("");
+            setDescription("");
+        } catch {
+            setErrors({
+                general: "Unable to create job.",
+            });
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <h2>Add Job</h2>
+
+            <div>
+                <label htmlFor="title">Title</label>
+                <input
+                    id="title"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                />
+                {errors.title && <p>{errors.title}</p>}
+            </div>
+
+            <div>
+                <label htmlFor="company">Company</label>
+                <input
+                    id="company"
+                    value={company}
+                    onChange={(event) => setCompany(event.target.value)}
+                />
+                {errors.company && <p>{errors.company}</p>}
+            </div>
+
+            <div>
+                <label htmlFor="url">URL</label>
+                <input
+                    id="url"
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                />
+                {errors.url && <p>{errors.url}</p>}
+            </div>
+
+            <div>
+                <label htmlFor="description">Description</label>
+                <textarea
+                    id="description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                />
+                {errors.description && <p>{errors.description}</p>}
+            </div>
+
+            {errors.general && <p>{errors.general}</p>}
+
+            <button type="submit" disabled={submitting}>
+                {submitting ? "Adding..." : "Add Job"}
+            </button>
+        </form>
+    );
+}
+```
+This accomplishes three Day 4 requirements:
+
+- form validation
+    
+- duplicate submission prevention
+    
+- displaying validation errors
+---
+
+### 6. Why `submitting` prevents duplicate requests
+
+Without it, a user could click:
+
+```text
+Add Job
+Add Job
+Add Job
+```
+
+while the first request is still running.
+
+we have:
+
+```tsx
+if (submitting) {
+    return;
+}
+```
+
+and:
+
+```html
+<button disabled={submitting}>
+```
+
+So both the UI and the handler prevent another submission.
+
+The lifecycle is:
+
+```text
+submitting = false
+        ↓
+user submits
+        ↓
+validation
+        ↓
+submitting = true
+        ↓
+API request
+        ↓
+request completes
+        ↓
+submitting = false
+```
+
+`finally` is important because it runs whether the request succeeds or fails.
+
+---
+
+### 7. Create `useJobs()` Hook
+
+> [!Note]
+> A hook in React is a function that allows you to use state and other React features in functional components, enabling you to manage component state and handle side effects without using class components. Although the most common hooks are useState for managing state and useEffect for handling side effects, we can also define custom hooks.
+
+We can move the job-fetching and job-management logic out of `JobsPage` into a custom `useJobs` hook. This keeps the page focused on rendering while allowing the job state and operations to be reused by other components when needed.
+
+Create:
+
+```text
+src/hooks/useJobs.ts
+```
+
+```tsx
+import { useCallback, useEffect, useState } from "react";
+import { createJob, getJobs, type CreateJobInput } from "../api/jobs";
+import type { Job } from "../types/jobs";
+
+export function useJobs() {
+    const [jobs, setJobs] = useState<Job[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const loadJobs = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const data = await getJobs();
+            setJobs(data);
+        } catch {
+            setError("Unable to load jobs.");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const addJob = useCallback(async (job: CreateJobInput) => {
+        const createdJob = await createJob(job);
+
+        setJobs((currentJobs) => [
+            ...currentJobs,
+            createdJob,
+        ]);
+
+        return createdJob;
+    }, []);
+
+    useEffect(() => {
+        loadJobs();
+    }, [loadJobs]);
+
+    return {
+        jobs,
+        loading,
+        error,
+        addJob,
+        reload: loadJobs,
+    };
+}
+```
+
+Now the hook owns:
+
+```text
+jobs
+loading
+error
+addJob()
+reload()
+```
+---
+
+### 8. Use the hook in `JobsPage`
+
+Now `JobsPage.tsx` becomes:
+
+```tsx
+import { JobCard } from "../components/JobCard";
+import { useJobs } from "../hooks/useJobs";
+
+export function JobsPage() {
+    const { jobs, loading, error } = useJobs();
+
+    if (loading) {
+        return <p>Loading jobs...</p>;
+    }
+
+    if (error) {
+        return <p>{error}</p>;
+    }
+
+    return (
+        <section>
+            <h1>Jobs</h1>
+
+            {jobs.length === 0 ? (
+                <p>No jobs have been added yet.</p>
+            ) : (
+                jobs.map((job) => (
+                    <JobCard
+                        key={job.id}
+                        job={job}
+                    />
+                ))
+            )}
+        </section>
+    );
+}
+```
+
+Notice what disappeared:
+
+```text
+useState
+useEffect
+fetch
+API error handling
+```
+
+That's now handled by `useJobs()`.
+
+---
+
+### 9. Update `JobForm` to use the `useJobs` hook
+Now that we have our custom hook handling jobs, update `JobForm` 
+```tsx
+import { useState, type SubmitEvent } from "react";
+
+import type { CreateJobInput } from "../api/jobs";
+import type { Job } from "../types/jobs";
+
+interface JobFormProps {
+    onSubmit: (job: CreateJobInput) => Promise<Job>;
+}
+
+interface FormErrors {
+    title?: string;
+    company?: string;
+    url?: string;
+    description?: string;
+    general?: string;
+}
+
+export function JobForm({ onSubmit }: JobFormProps) {
+    const [title, setTitle] = useState("");
+    const [company, setCompany] = useState("");
+    const [url, setUrl] = useState("");
+    const [description, setDescription] = useState("");
+
+    const [errors, setErrors] = useState<FormErrors>({});
+    const [submitting, setSubmitting] = useState(false);
+
+    function validate(): FormErrors {
+        const errors: FormErrors = {};
+
+        if (!title.trim()) {
+            errors.title = "Title is required.";
+        }
+
+        if (!company.trim()) {
+            errors.company = "Company is required.";
+        }
+
+        if (!url.trim()) {
+            errors.url = "URL is required.";
+        }
+
+        if (!description.trim()) {
+            errors.description = "Description is required.";
+        }
+
+        return errors;
+    }
+
+    async function handleSubmit(
+        event: SubmitEvent<HTMLFormElement>,
+    ) {
+        event.preventDefault();
+
+        if (submitting) {
+            return;
+        }
+
+        const validationErrors = validate();
+
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
+        setErrors({});
+        setSubmitting(true);
+
+        try {
+            await onSubmit({
+                title: title.trim(),
+                company: company.trim(),
+                url: url.trim(),
+                description: description.trim(),
+            });
+
+            setTitle("");
+            setCompany("");
+            setUrl("");
+            setDescription("");
+        } catch {
+            setErrors({
+                general: "Unable to create job.",
+            });
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <h2>Add Job</h2>
+
+            <div>
+                <label htmlFor="title">Title</label>
+                <input
+                    id="title"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                />
+                {errors.title && <p>{errors.title}</p>}
+            </div>
+
+            <div>
+                <label htmlFor="company">Company</label>
+                <input
+                    id="company"
+                    value={company}
+                    onChange={(event) => setCompany(event.target.value)}
+                />
+                {errors.company && <p>{errors.company}</p>}
+            </div>
+
+            <div>
+                <label htmlFor="url">URL</label>
+                <input
+                    id="url"
+                    value={url}
+                    onChange={(event) => setUrl(event.target.value)}
+                />
+                {errors.url && <p>{errors.url}</p>}
+            </div>
+
+            <div>
+                <label htmlFor="description">Description</label>
+                <textarea
+                    id="description"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                />
+                {errors.description && <p>{errors.description}</p>}
+            </div>
+
+            {errors.general && <p>{errors.general}</p>}
+
+            <button type="submit" disabled={submitting}>
+                {submitting ? "Adding..." : "Add Job"}
+            </button>
+        </form>
+    );
+}
+```
+
+Then `JobsPage` connects it:
+
+```tsx
+const { jobs, loading, error, addJob } = useJobs();
+
+<JobForm onSubmit={addJob} />
+```
+---
+
+### 10. Controlled vs Uncontrolled Components
+
+This is an interview concept you should understand rather than just memorize.
+
+#### Controlled
+
+Your current `JobForm` is a **controlled component**.
+
+For example:
+
+```tsx
+const [title, setTitle] = useState("");
+
+<input
+    value={title}
+    onChange={(event) => setTitle(event.target.value)}
+/>
+```
+
+React owns the input value.
+
+```text
+User types
+    ↓
+onChange
+    ↓
+setTitle()
+    ↓
+React state changes
+    ↓
+input value updates
+```
+
+Interview answer:
+
+> A controlled component is a form element whose value is managed by React state. React becomes the source of truth for the input.
+
+##### Advantages
+
+- Easy validation
+    
+- Easy conditional UI
+    
+- Easy to reset
+    
+- Easy to transform input
+    
+- React always knows the current value
+    
+
+---
+
+#### Uncontrolled
+
+An uncontrolled input lets the DOM manage its own value.
+
+Example:
+
+```tsx
+const inputRef = useRef<HTMLInputElement>(null);
+
+<input ref={inputRef} />
+```
+
+You would retrieve the value from the DOM when needed:
+
+```tsx
+inputRef.current?.value
+```
+
+Interview answer:
+
+> An uncontrolled component lets the DOM manage the input's state, and React accesses the value through a ref when needed.
+
+#### Quick comparison
+
+||Controlled|Uncontrolled|
+|---|---|---|
+|State owner|React|DOM|
+|Access|React state|`ref`|
+|Validation|Easy|More manual|
+|Resetting|Easy|DOM-based|
+|Typical React forms|Common|Less common|
+
+For **CareerPilot**, controlled inputs are a good choice because we need validation and backend error handling.
+
+---
+
+### 11. Edit + Delete Jobs
+
+For edit and delete functionality we first need to implement API functions in `api/jobs.ts`
+
+#### `updateJob()`
+```ts
+export async function updateJob(
+    id: number,
+    updates: Partial<CreateJobInput>,
+): Promise<Job> {
+    const response = await fetch(`/api/jobs/${id}/`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to update job");
+    }
+
+    return response.json();
+}
+```
+#### `deleteJob()`
+```ts
+export async function deleteJob(id: number): Promise<void> {
+    const response = await fetch(`/api/jobs/${id}/`, {
+        method: "DELETE",
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to delete job");
+    }
+}
+```
+
+Then we can add `updateJob()` and `deleteJob()` to `useJobs()`.
+
+```ts
+import {
+    createJob,
+    getJobs,
+    updateJob as updateJobApi,
+    deleteJob as deleteJobApi,
+    type CreateJobInput,
+} from "../api/jobs";
+
+...
+
+const updateJob = useCallback(
+    async (id: number, updates: Partial<CreateJobInput>) => {
+        const updatedJob = await updateJobApi(id, updates);
+
+        setJobs((currentJobs) =>
+            currentJobs.map((job) =>
+                job.id === id ? updatedJob : job
+            )
+        );
+
+        return updatedJob;
+    },
+    [],
+);
+
+const deleteJob = useCallback(async (id: number) => {
+    await deleteJobApi(id);
+
+    setJobs((currentJobs) =>
+        currentJobs.filter((job) => job.id !== id)
+    );
+}, []);
+
+return {
+    jobs,
+    loading,
+    error,
+    addJob,
+    updateJob,
+    deleteJob,
+    reload: loadJobs,
+};
+```
+
+### What Changed
+
+Refactored the job creation and job editing UI to use a single reusable JobForm component.
+
+Previously:
+
+- `JobForm` was primarily used for adding jobs.
+- `JobCard` contained its own edit-form markup.
+The Add Job form was permanently displayed in a sidebar.
+
+Now:
+
+- `JobForm` supports both add and edit modes.
+- Add and Edit use the same form structure and styling.
+- `JobCard` renders `JobForm` when a job is being edited.
+- A new AddJobCard renders the same `JobForm` in add mode.
+- The Add Job form appears as a temporary job card within the existing job list.
+- The `+ Add Job` button is disabled while the temporary add card is open.
+- Canceling the add operation removes only the temporary add card.
+- Successfully creating a job removes the temporary form and adds the newly created job to the job list.
+
+#### Component Responsibilities
+```text
+JobsPage
+├── controls add-job state
+├── renders + Add Job button
+├── renders AddJobCard when adding
+└── renders JobCard for existing jobs
+AddJobCard
+└── renders JobForm in add mode
+
+JobCard
+├── displays job
+├── handles edit state
+├── renders JobForm in edit mode
+└── handles delete
+
+JobForm
+├── manages form state
+├── validates input
+├── handles submitting state
+└── calls the supplied onSubmit callback
+```
+
+#### Key Design Decision
+
+The form component does not know whether it is creating or updating a job at the API level.
+
+It receives behavior through callbacks:
+```tsx
+<JobForm
+    mode="add"
+    onSubmit={addJob}
+    onCancel={() => setAdding(false)}
+/>
+```
+and:
+```tsx
+<JobForm
+    mode="edit"
+    initialValues={job}
+    onSubmit={(values) => updateJob(job.id, values)}
+    onCancel={() => setEditing(false)}
+/>
+```
+This keeps responsibilities separated:
+```text
+JobForm
+    ↓
+Form state + validation + UI
+
+JobsPage / JobCard
+    ↓
+Decides what operation should happen
+
+useJobs
+    ↓
+Application state + mutations
+
+api/jobs.ts
+    ↓
+HTTP requests
+```
+
+#### React Concepts Learned
+
+##### Reusable Components
+
+When two UI flows have the same fields, validation, layout, and behavior, they should share a common component instead of maintaining duplicate markup.
+
+The differences should be supplied through props.
+
+##### Controlled Components
+
+`JobForm` uses controlled inputs:
+```tsx
+<input
+    value={title}
+    onChange={(event) => setTitle(event.target.value)}
+/>
+```
+React state is the source of truth for the form values.
+
+##### Conditional Rendering
+
+The dashboard uses conditional rendering to display the temporary Add Job card:
+```tsx
+{adding && (
+    <AddJobCard
+        onSubmit={handleAddJob}
+        onCancel={handleCancelAdd}
+    />
+)}
+```
+The existing jobs remain in the same list.
+
+##### Component Composition
+
+`AddJobCard` and `JobCard` both compose the same `JobForm` rather than implementing separate forms.
+
+This avoids duplication while allowing each parent component to control its own behavior.
+
+#### UX Improvement
+
+The Add Job flow now behaves consistently with the Edit flow.
+
+Instead of navigating away from the job list or replacing the dashboard:
+```text
++ Add Job
+    ↓
+temporary JobCard
+    ↓
+JobForm
+```
+The user remains in the context of the job list.
+
+Canceling simply removes the temporary card and restores the previous state.
+
+#### API Behavior
+
+No backend API changes were required.
+
+Existing operations remain:
+``` shell
+GET    /api/jobs/
+POST   /api/jobs/
+PATCH  /api/jobs/<id>/
+DELETE /api/jobs/<id>/
+```
+Edit continues to send only fields that changed.
+
+#### Files Changed
+```shell
+frontend/src/
+├── components/
+│   ├── AddJobCard.tsx      # New
+│   ├── JobCard.tsx         # Refactored
+│   ├── JobCard.css         # Simplified
+│   ├── JobForm.tsx         # Refactored for add/edit
+│   └── JobForm.css         # Shared form styling
+│
+└── pages/
+    ├── JobsPage.tsx        # Inline add-card flow
+    └── JobsPage.css        # Removed add-job sidebar layout
+```
+
+#### Result
+
+The dashboard now has one reusable form implementation for both job creation and editing, with the Add Job form appearing as a temporary card in the same visual context as an edited job.
+
+No duplicate Add/Edit form markup is maintained.

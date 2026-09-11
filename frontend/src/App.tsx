@@ -1,4 +1,3 @@
-import { JobPostingForm } from "./components/JobPostingForm";
 import { JobsPage } from "./pages/JobsPage";
 import { SavedApplicationsPage } from "./pages/SavedApplicationsPage";
 
@@ -11,9 +10,6 @@ function App() {
 
             <SavedApplicationsPage />
 
-            <hr />
-
-            <JobPostingForm />
         </main>
     );
 }

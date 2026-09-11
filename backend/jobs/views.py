@@ -6,7 +6,7 @@ from .serializers import JobApplicationSerializer, JobPostingSerializer
 
 
 # GET | POST /api/job
-class JobListCreateView(generics.ListCreateAPIView):
+class JobListView(generics.ListCreateAPIView):
     # ListCreateAPIView provides the GET (list) and POST (create)
     # behavior, so we only need to configure the queryset and serializer.
     queryset = JobPosting.objects.all()
@@ -20,7 +20,7 @@ class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # GET /api/applications/
-class JobApplicationListView(generics.ListAPIView):
+class ApplicationListView(generics.ListAPIView):
     serializer_class = JobApplicationSerializer
 
     def get_queryset(self):
