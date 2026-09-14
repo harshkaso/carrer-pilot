@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { getSavedApplications } from "../api/jobs";
-import type{ JobApplication } from "../types/jobs";
+import { getApplications } from "../api/jobs";
+import type{ Application } from "../types/jobs";
 
 export function SavedApplicationsPage() {
-    const [applications, setApplications] = useState<JobApplication[]>([]);
+    const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         async function loadApplications() {
             try {
-                const data = await getSavedApplications();
+                const data = await getApplications();
                 setApplications(data);
             } catch {
                 setError("Unable to load saved applications.");
@@ -39,9 +39,9 @@ export function SavedApplicationsPage() {
                 <ul>
                     {applications.map((application) => (
                         <li key={application.id}>
-                            <h2>{application.job_posting.title}</h2>
-                            <p>{application.job_posting.company}</p>
-                            <a href={application.job_posting.url} target="_blank" rel="noreferrer">View job posting</a>
+                            <h2>{application.job.title}</h2>
+                            <p>{application.job.company}</p>
+                            <a href={application.job.url} target="_blank" rel="noreferrer">View job posting</a>
                         </li>
                     ))}
                 </ul>

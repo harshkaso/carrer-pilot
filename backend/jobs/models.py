@@ -1,7 +1,13 @@
+from django.contrib.auth.models import User  # type: ignore
 from django.db import models  # type: ignore
 
 
-class JobPosting(models.Model):
+class Job(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="jobs",
+    )
     title = models.CharField(max_length=255)
     company = models.CharField(max_length=255)
     url = models.URLField()
@@ -11,28 +17,34 @@ class JobPosting(models.Model):
         return f"{self.company} — {self.title}"
 
 
-class JobApplication(models.Model):
-    class Status(models.TextChoices):
+class Application(models.Model):
+    class JobStatus(models.TextChoices):
         SAVED = "saved", "Saved"
         APPLIED = "applied", "Applied"
         INTERVIEW = "interview", "Interview"
         OFFER = "offer", "Offer"
         REJECTED = "rejected", "Rejected"
 
-    job_posting = models.ForeignKey(
-        JobPosting,
-        on_delete=models.CASCADE,  # If I delete Job application to a job positing, it will delete the job posting as well.
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="applications",
+    )
+
+    job = models.ForeignKey(
+        Job,
+        on_delete=models.CASCADE,  # If a Job is deleted, delete its related Application records.
         related_name="applications",
     )
 
     status = models.CharField(
         max_length=20,
-        choices=Status.choices,
-        default=Status.SAVED,
+        choices=JobStatus.choices,
+        default=JobStatus.SAVED,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"{self.job_posting} — {self.status}"
+        return f"{self.job} — {self.status}"

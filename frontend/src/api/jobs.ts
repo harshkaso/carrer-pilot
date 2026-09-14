@@ -1,8 +1,16 @@
 
 import type { Application, JobStatus, Job } from "../types/jobs";
+import { apiFetch } from "./client";
 
-export async function getApplications(): Promise<Application[]> {
-    const response = await fetch("/api/applications/");
+export async function getApplications(
+    token: string,
+    status?: JobStatus,
+): Promise<Application[]> {
+    const url = status
+        ? `/api/applications/?status=${encodeURIComponent(status)}`
+        : "/api/applications/";
+
+    const response = await apiFetch(url,token);
 
     if (!response.ok) {
         throw new Error("Failed to fetch applications");
@@ -11,23 +19,8 @@ export async function getApplications(): Promise<Application[]> {
     return response.json();
 }
 
-export async function getFilteredApplications(
-    status: JobStatus,
-): Promise<Application[]> {
-    const response = await fetch(
-        `/api/applications/?status=${encodeURIComponent(status)}`,
-    );
-
-    if (!response.ok) {
-        throw new Error(
-            "Failed to fetch filtered applications",
-        );
-    }
-
-    return response.json();
-}
-export async function getJobs(): Promise<Job[]> {
-    const response = await fetch("/api/jobs/");
+export async function getJobs(token: string,): Promise<Job[]> {
+    const response = await apiFetch("/api/jobs/",token);
     if (!response.ok) {
         throw new Error("Failed to fetch jobs")
     }
@@ -42,8 +35,8 @@ export interface CreateJobInput {
     description: string;
 }
 
-export async function createJob(job: CreateJobInput): Promise<Job> {
-    const response = await fetch("/api/jobs/", {
+export async function createJob(token: string, job: CreateJobInput,): Promise<Job> {
+    const response = await apiFetch("/api/jobs/", token, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -58,8 +51,8 @@ export async function createJob(job: CreateJobInput): Promise<Job> {
     return response.json();
 }
 
-export async function updateJob(id: number, updates: Partial<CreateJobInput>): Promise<Job> {
-    const response = await fetch(`api/jobs/${id}/`, {
+export async function updateJob(token: string, id: number, updates: Partial<CreateJobInput>): Promise<Job> {
+    const response = await apiFetch(`api/jobs/${id}/`,token, {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json"
@@ -74,8 +67,8 @@ export async function updateJob(id: number, updates: Partial<CreateJobInput>): P
     return response.json();
 }
 
-export async function deleteJob(id: number): Promise<void> {
-    const response = await fetch(`/api/jobs/${id}/`, {
+export async function deleteJob(token: string, id: number): Promise<void> {
+    const response = await apiFetch(`/api/jobs/${id}/`, token, {
         method: "DELETE",
     });
     if (!response.ok) {

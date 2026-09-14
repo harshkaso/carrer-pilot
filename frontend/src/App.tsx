@@ -5,11 +5,6 @@ function App() {
     return (
         <main>
             <JobsPage />
-
-            <hr />
-
-            <SavedApplicationsPage />
-
         </main>
     );
 }

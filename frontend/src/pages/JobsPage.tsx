@@ -30,26 +30,6 @@ export function JobsPage() {
         setAdding(false);
     }
 
-    if (loading) {
-        return (
-            <main className="jobs-page">
-                <div className="jobs-loading">
-                    Loading jobs...
-                </div>
-            </main>
-        );
-    }
-
-    if (error) {
-        return (
-            <main className="jobs-page">
-                <div className="jobs-error">
-                    {error}
-                </div>
-            </main>
-        );
-    }
-
     return (
         <main className="jobs-page">
             <header className="dashboard-header">
@@ -83,10 +63,10 @@ export function JobsPage() {
                             {jobs.length === 0
                                 ? "No jobs saved yet."
                                 : `${jobs.length} saved ${
-                                      jobs.length === 1
-                                          ? "job"
-                                          : "jobs"
-                                  }`}
+                                    jobs.length === 1
+                                        ? "job"
+                                        : "jobs"
+                                }`}
                         </p>
                     </div>
 
@@ -94,7 +74,7 @@ export function JobsPage() {
                         type="button"
                         className="button button--primary add-job-button"
                         onClick={() => setAdding(true)}
-                        disabled={adding}
+                        disabled={adding || loading || !!error}
                     >
                         <span
                             className="add-job-button__icon"
@@ -108,34 +88,47 @@ export function JobsPage() {
                 </div>
 
                 <div className="jobs-list">
-                    {adding && (
-                        <AddJobCard
-                            onSubmit={handleAddJob}
-                            onCancel={handleCancelAdd}
-                        />
+                    {loading ? (
+                        <div className="jobs-loading empty-state">
+                            Loading jobs...
+                        </div>
+                    ) : error ? (
+                        <div className="jobs-error empty-state">
+                            {error}
+                        </div>
+                    ) : (
+                        <>
+                            {adding && (
+                                <AddJobCard
+                                    onSubmit={handleAddJob}
+                                    onCancel={handleCancelAdd}
+                                />
+                            )}
+
+                            {jobs.map((job) => (
+                                <JobCard
+                                    key={job.id}
+                                    job={job}
+                                    onUpdate={updateJob}
+                                    onDelete={deleteJob}
+                                />
+                            ))}
+
+                            {jobs.length === 0 && !adding && (
+                                <div className="empty-state">
+                                    <h3>No jobs yet</h3>
+
+                                    <p>
+                                        Add your first job posting to start
+                                        building your CareerPilot workspace.
+                                    </p>
+                                </div>
+                            )}
+                        </>
                     )}
-
-                    {jobs.map((job) => (
-                        <JobCard
-                            key={job.id}
-                            job={job}
-                            onUpdate={updateJob}
-                            onDelete={deleteJob}
-                        />
-                    ))}
                 </div>
-
-                {jobs.length === 0 && !adding && (
-                    <div className="empty-state">
-                        <h3>No jobs yet</h3>
-
-                        <p>
-                            Add your first job posting to start
-                            building your CareerPilot workspace.
-                        </p>
-                    </div>
-                )}
             </section>
+
         </main>
     );
 }

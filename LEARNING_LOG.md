@@ -1,368 +1,296 @@
-# Learning Log
+# CareerPilot — Learning Log
 
-This document records technical concepts, problems, mistakes, debugging
-experiences, and lessons learned while building CareerPilot.
+This document records the technical concepts, implementation decisions, debugging experiences, mistakes, and lessons learned while building **CareerPilot — an AI Job Search & Interview Copilot**.
 
-The purpose is to capture practical learning that can be revisited during
-interview preparation and used to improve future engineering decisions.
+The purpose of this log is to:
 
+* document the engineering decisions made during development;
+* capture problems and their solutions;
+* reinforce concepts for technical interviews;
+* provide a record of how the application evolved from a basic vertical slice into a production-oriented full-stack application.
 
-## Day 1 - Project Setup
+---
+
+# Day 1 — Project Setup
+
+## Goals
+
+* Set up the Python backend using `uv`.
+* Create the Django project.
+* Set up the React + TypeScript frontend using Vite.
+* Verify that both development environments work.
+* Understand the role of the primary project configuration files.
+
+## Implementation
 
 ### Django + uv
 
-Create a Python project with `pyproject.toml`.
-```shell
+Created the Python backend:
+
+```bash
 uv init backend
 cd backend
-```
-Add Django as a project dependency.
-```shell
 uv add django
 ```
 
-Create the Django project named `config` in the current directory.
-> [!TIP] 
-> `uv run` executes commands within the project's managed environment.
-```shell
+Created the Django project in the current directory:
+
+```bash
 uv run django-admin startproject config .
 ```
-The `.` at the end tells Django to create the project in the current
-directory instead of creating another nested directory.
 
-Create Django's initial development database.
-```shell
+The `.` prevents Django from creating an additional nested directory.
+
+Applied Django's initial migrations:
+
+```bash
 uv run python manage.py migrate
 ```
-CareerPilot will eventually use PostgreSQL. For Day 1, SQLite is
-acceptable because the goal is simply to verify that Django is correctly
-installed and the development environment works.
 
-Finally, Django's development server can be started with
-```shell
+Started the development server:
+
+```bash
 uv run python manage.py runserver
 ```
-Verify that the server is accessible at:
-```shell
+
+Verified the Django development server at:
+
+```text
 http://127.0.0.1:8000/
 ```
-The Django welcome page confirms that the project was created successfully and the development server is running.
 
-#### Key Concepts
-
-`pyproject.toml`\
-The standard project configuration file for the Python backend. It
-contains project metadata and declares Python dependencies.
-
-`uv.lock`\
-The lockfile containing the resolved dependency versions for the
-project. It allows the environment to be reproduced consistently.
-
-`.venv`\
-The project's local Python virtual environment. It isolates CareerPilot's Python dependencies from other projects and should not be committed to Git.
-
-`manage.py`\
-Django's command-line utility for performing project-specific tasks such as running the development server, applying migrations, and creating Django applications.
+SQLite was intentionally used initially. PostgreSQL was introduced later once the basic Django project was verified.
 
 ### React + TypeScript + Vite
 
-Create the React frontend using Vite with TypeScript.
+Created the frontend:
 
-```shell
+```bash
 npm create vite@latest frontend -- --template react-ts
-```
-The command creates a new frontend directory containing a React + TypeScript application configured with Vite.
-
-Move into the frontend project and install its dependencies.
-```shell
 cd frontend
 npm install
 ```
 
-Start the Vite development server.
-```shell
+Started the development server:
+
+```bash
 npm run dev
 ```
-The development server runs locally, typically at:
-```shell
+
+Verified the frontend at:
+
+```text
 http://localhost:5173/
 ```
-Opening the URL in a browser and seeing the default React application verifies that the frontend was created successfully.
 
-#### Key Concepts
+## Key Concepts
 
-`React`\
-React is the UI library used to build CareerPilot's frontend. The application will use React components to construct the user interface.
+### `pyproject.toml`
 
-`TypeScript`\
-TypeScript adds static typing to JavaScript. CareerPilot will use TypeScript to make frontend code easier to reason about and maintain as the application grows.
+The primary Python project configuration file.
 
-`Vite`\
-Vite is the development and build tool used by the React frontend. It provides the development server and handles building the application for production.
+It contains project metadata and Python dependencies.
 
-> [!NOTE] 
-> Vite is not a replacement for React. React is responsible for building the UI, while Vite provides the tooling used to develop and build the React application.
+### `uv.lock`
 
-`package.json`\
-Defines the frontend project's metadata, dependencies, and npm scripts.
+Locks the resolved Python dependency versions so the environment can be reproduced consistently.
 
-`package-lock.json`\
-Records the resolved versions of the installed npm dependencies so that the dependency tree can be reproduced consistently.
+### `.venv`
 
-`node_modules/`\
-Contains the locally installed npm dependencies. It is generated by
-npm install and should not be committed to Git.
+The project's isolated Python environment.
 
-## Day 2 — OOP, Django Models & API Integration
+It prevents CareerPilot's dependencies from interfering with other Python projects.
 
-### Objectives
+It should not be committed to Git.
 
-- Understand Django projects vs. Django apps.
-- Create Django models using the ORM.
-- Understand migrations and database schema changes.
-- Register models in Django Admin.
-- Work with Django Shell and create test data.
-- Understand Django REST Framework (DRF).
-- Create serializers and API views.
-- Connect React + TypeScript to the Django backend.
-- Make real `GET` and `POST` API requests from the frontend.
-- Build a saved applications page and job posting form.
+### `manage.py`
 
----
-
-### Part 1 — Django Project vs. Django App
-
-#### Django Project
-
-A **Django project** represents the overall web application and contains its configuration.
-
-Typical files include:
-
-* `settings.py` — project configuration
-* `urls.py` — URL routing
-* `wsgi.py` — WSGI deployment configuration
-* `asgi.py` — ASGI deployment configuration
-* `manage.py` — Django command-line utility
-
-#### Django App
-
-A **Django app** is a modular component within a project that handles a specific feature or domain.
+Django's project-specific command-line utility.
 
 Examples:
 
-* `users`
-* `jobs`
-* `payments`
-* `products`
+```bash
+uv run python manage.py migrate
+uv run python manage.py runserver
+uv run python manage.py startapp jobs
+```
 
-A single Django project can contain multiple Django apps.
+### React vs. Vite
 
-#### Typical Structure
+React is responsible for building the UI.
 
-```shell
-myproject/
+Vite provides the development and build tooling around the React application.
+
+Vite is therefore not a replacement for React.
+
+### `package.json`
+
+Defines frontend metadata, dependencies, and npm scripts.
+
+### `package-lock.json`
+
+Records resolved npm dependency versions.
+
+### `node_modules`
+
+Contains installed npm dependencies and should not be committed.
+
+## Decisions
+
+### SQLite for initial setup
+
+SQLite was used only during initial Django setup.
+
+The purpose of Day 1 was to verify the development environment before introducing PostgreSQL and additional infrastructure.
+
+### Separate frontend and backend
+
+CareerPilot uses a separate React frontend and Django backend rather than Django-rendered templates.
+
+This matches the intended architecture:
+
+```text
+React + TypeScript
+        ↓
+Django REST Framework
+        ↓
+PostgreSQL
+```
+
+## Testing
+
+Verified:
+
+* Django project starts successfully.
+* Django migrations execute successfully.
+* Django development server loads.
+* Vite frontend starts successfully.
+* React application renders successfully.
+
+## Problems / Fixes
+
+No significant implementation problems occurred on Day 1.
+
+The main objective was establishing a clean development environment before adding application functionality.
+
+## Interview Takeaways
+
+### What is `uv`?
+
+`uv` is a Python package and project management tool used to create environments, manage dependencies, and execute commands within the project's environment.
+
+### What is the difference between React and Vite?
+
+React is the UI library.
+
+Vite is the development/build tool that serves and bundles the React application.
+
+### Why use a virtual environment?
+
+A virtual environment isolates project dependencies and prevents dependency conflicts between Python projects.
+
+## Files Changed
+
+```text
+backend/
+├── pyproject.toml
+├── uv.lock
 ├── manage.py
-│
-├── myproject/             # Django project
-│   ├── settings.py
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── ...
-│
-└── jobs/                  # Django app
-    ├── admin.py
-    ├── apps.py
-    ├── models.py
-    ├── views.py
+└── config/
+    ├── settings.py
     ├── urls.py
-    └── ...
+    ├── asgi.py
+    └── wsgi.py
+
+frontend/
+├── package.json
+├── package-lock.json
+├── vite.config.ts
+└── src/
 ```
 
-#### CareerPilot
+## Result
 
-For CareerPilot:
-
-```shell
-careerpilot/
-└── backend/
-    ├── manage.py
-    │
-    ├── config/             # Django project
-    │   ├── settings.py
-    │   ├── urls.py
-    │   └── ...
-    │
-    └── jobs/               # Django app
-        ├── models.py
-        ├── views.py
-        ├── serializers.py
-        ├── urls.py
-        └── ...
-```
+CareerPilot had a working Django backend and React + TypeScript frontend with independent development servers.
 
 ---
 
-### Part 2 — Creating a Django App
+# Day 2 — Django Models, DRF & Frontend API Integration
 
-Create the `jobs` app from the Django project root:
+## Goals
+
+* Understand Django projects versus apps.
+* Create Django models using the ORM.
+* Understand relationships and migrations.
+* Register models in Django Admin.
+* Work with the Django Shell.
+* Introduce Django REST Framework.
+* Build serializers and generic API views.
+* Connect React to the backend.
+* Make real `GET` and `POST` requests.
+* Build the first vertical slice of CareerPilot.
+
+## Implementation
+
+### Django Project vs. App
+
+The Django project contains application-wide configuration:
+
+```text
+config/
+├── settings.py
+├── urls.py
+├── wsgi.py
+└── asgi.py
+```
+
+The `jobs` app contains the job-related domain logic:
+
+```text
+jobs/
+├── admin.py
+├── apps.py
+├── models.py
+├── serializers.py
+├── views.py
+└── urls.py
+```
+
+Created the app:
 
 ```bash
 uv run python manage.py startapp jobs
 ```
 
-This creates the `jobs` Django app.
+Registered it in `INSTALLED_APPS`.
 
 ---
 
-### Part 3 — Registering the App
+## Initial Domain Models
 
-After creating an app, Django needs to know that the app is part of the project.
+The initial domain model used:
 
-Open:
-
-```shell
-backend/config/settings.py
+```text
+JobPosting
+JobApplication
 ```
 
-Add `jobs` to `INSTALLED_APPS`:
+A `JobApplication` referenced a `JobPosting` through a foreign key.
+
+The application status used Django `TextChoices`:
 
 ```python
-INSTALLED_APPS = [
-    # ...
-    "jobs",
-]
+class Status(models.TextChoices):
+    SAVED = "saved", "Saved"
+    APPLIED = "applied", "Applied"
+    INTERVIEW = "interview", "Interview"
+    OFFER = "offer", "Offer"
+    REJECTED = "rejected", "Rejected"
 ```
 
-This allows Django to discover the app's models, migrations, admin configuration, etc.
+### Relationship
 
----
-
-### Part 4 — Django Models
-
-Django models are Python classes that define the structure and behavior of database data.
-
-They are a core part of Django's **Object-Relational Mapping (ORM)** system.
-
-The ORM allows us to interact with database records using Python instead of writing SQL directly.
-
-For example:
-
-```python
-JobPosting.objects.all()
-```
-
-instead of:
-
-```sql
-SELECT * FROM jobs_jobposting;
-```
-
-Each Django app can contain multiple models.
-
-For CareerPilot:
-
-```shell
-backend/jobs/models.py
-```
-
-```python
-from django.db import models
-```
-
----
-
-### CareerPilot Models
-
-#### JobPosting
-
-```python
-class JobPosting(models.Model):
-    title = models.CharField(max_length=255)
-    company = models.CharField(max_length=255)
-    url = models.URLField()
-    description = models.TextField()
-
-    def __str__(self) -> str:
-        return f"{self.company} — {self.title}"
-```
-
-#### JobApplication
-
-```python
-class JobApplication(models.Model):
-    class Status(models.TextChoices):
-        SAVED = "saved", "Saved"
-        APPLIED = "applied", "Applied"
-        INTERVIEW = "interview", "Interview"
-        OFFER = "offer", "Offer"
-        REJECTED = "rejected", "Rejected"
-
-    job_posting = models.ForeignKey(
-        JobPosting,
-        on_delete=models.CASCADE,
-        related_name="applications",
-    )
-
-    status = models.CharField(
-        max_length=20,
-        choices=Status.choices,
-        default=Status.SAVED,
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self) -> str:
-        return f"{self.job_posting} — {self.get_status_display()}"
-```
-
-> [!NOTE] CareerPilot will eventually associate `JobApplication` with Django's built-in `User` model. That relationship should be added before implementing authenticated application tracking.
-
----
-
-### Django Automatically Creates an ID
-
-We did not explicitly define an `id` field.
-
-Django automatically adds a primary-key field when one isn't defined.
-
-Conceptually:
-
-```python
-id = models.BigAutoField(primary_key=True)
-```
-
-Therefore, the database records have IDs even though we didn't write the field ourselves.
-
-This means a serializer can correctly expose:
-
-```python
-fields = [
-    "id",
-    "title",
-    "company",
-    "url",
-    "description",
-]
-```
-
----
-
-### Understanding `ForeignKey`
-
-The relationship:
-
-```python
-job_posting = models.ForeignKey(
-    JobPosting,
-    on_delete=models.CASCADE,
-    related_name="applications",
-)
-```
-
-means:
-
-```shell
+```text
 JobPosting
     │
     │ 1 → many
@@ -374,304 +302,81 @@ One job posting can have multiple applications.
 
 ### `on_delete=models.CASCADE`
 
-`CASCADE` means:
+Deleting a job posting deletes its related applications.
 
-```shell
-Delete JobPosting
-       ↓
-Delete related JobApplications
-```
+Deleting an application does not delete the job posting.
 
-It does **not** mean:
-
-```shell
-Delete JobApplication
-       ↓
-Delete JobPosting
-```
-
-Deleting a `JobApplication` leaves the associated `JobPosting` intact.
-
-This makes sense because the job posting is an independent entity.
+This reflects the intended ownership relationship: a job posting is an independent entity, while an application depends on it.
 
 ---
 
-### Part 5 — Django Migrations
+## Migrations
 
-Migrations propagate changes made to Django models into the database schema.
-
-They act somewhat like **version control for the database schema**.
-
-#### Creating Migrations
-
-When models are created or changed:
+Created migrations:
 
 ```bash
 uv run python manage.py makemigrations
 ```
 
-Django generates migration files containing instructions for changing the database schema.
-
-For example:
-
-```shell
-jobs/migrations/0001_initial.py
-```
-
-#### Applying Migrations
-
-Apply the migrations:
+Applied them:
 
 ```bash
 uv run python manage.py migrate
 ```
 
-This updates the actual database.
-
-#### Viewing Migration Status
+Checked migration state:
 
 ```bash
 uv run python manage.py showmigrations
 ```
 
-Expected output includes:
+Migration workflow:
 
-```shell
-jobs
- [X] 0001_initial
-```
-
-`[X]` means the migration has been applied.
-
----
-
-#### Changes That Usually Require Migrations
-
-Examples include:
-
-* Adding a model
-* Removing a model
-* Adding a field
-* Removing a field
-* Renaming a field
-* Changing field definitions
-* Changing database-related model options
-
-Typical workflow:
-
-```shell
-Modify models.py
-       ↓
+```text
+models.py
+    ↓
 makemigrations
-       ↓
+    ↓
 migration file
-       ↓
+    ↓
 migrate
-       ↓
-database schema updated
+    ↓
+database schema
 ```
 
----
+## Django Admin
 
-### Part 6 — Django Admin
+Registered the models in Django Admin to make it possible to inspect and modify records without building a custom management interface.
 
-Django Admin provides a built-in interface for managing database records.
-
-It allows us to perform CRUD operations without building a custom management UI.
-
-Open:
-
-```shell
-backend/jobs/admin.py
-```
-
-Add:
-
-```python
-from django.contrib import admin
-
-from .models import JobApplication, JobPosting
-
-
-@admin.register(JobPosting)
-class JobPostingAdmin(admin.ModelAdmin):
-    list_display = ("title", "company", "url")
-
-
-@admin.register(JobApplication)
-class JobApplicationAdmin(admin.ModelAdmin):
-    list_display = (
-        "job_posting",
-        "status",
-        "created_at",
-        "updated_at",
-    )
-
-    list_filter = ("status",)
-```
-
----
-
-#### Create a Superuser
-
-Create a Django admin account:
+Created a superuser:
 
 ```bash
 uv run python manage.py createsuperuser
 ```
 
-Django will interactively ask for:
+Verified the admin interface at:
 
-```shell
-Username:
-Email address:
-Password:
-Password (again):
-```
-
-The admin password does **not** need to be stored in `.env`.
-
-If the password is forgotten:
-
-```bash
-uv run python manage.py changepassword <username>
-```
-
----
-
-#### Start Django
-
-```bash
-uv run python manage.py runserver
-```
-
-Open:
-
-```shell
+```text
 http://127.0.0.1:8000/admin/
 ```
 
-The admin interface should contain:
+## Django Shell
 
-* Job postings
-* Job applications
-
----
-
-### Part 7 — Django Shell
-
-The Django Shell is an interactive Python environment with the Django project loaded.
-
-It is useful for:
-
-* Testing models
-* Querying the database
-* Debugging
-* Creating test records
-* Running one-time operations
-* Experimenting with the Django ORM
-
-Start it with:
+Used the Django Shell to create and inspect test data:
 
 ```bash
 uv run python manage.py shell
 ```
 
+Tested:
+
+* creating job postings;
+* creating applications;
+* counting records;
+* querying related fields;
+* checking application statuses.
+
 Example:
-
-```python
-from jobs.models import JobApplication, JobPosting
-```
-
----
-
-#### Create Test Job Postings
-
-```python
-jobs = [
-    JobPosting(
-        title="Python Developer",
-        company="Acme Inc.",
-        url="https://example.com/jobs/python-developer",
-        description="Build backend applications using Python and Django.",
-    ),
-    JobPosting(
-        title="Backend Developer",
-        company="Northstar Tech",
-        url="https://example.com/jobs/backend-developer",
-        description="Develop REST APIs and backend services.",
-    ),
-    JobPosting(
-        title="Full Stack Developer",
-        company="Maple Systems",
-        url="https://example.com/jobs/full-stack-developer",
-        description="Build web applications using React and Python.",
-    ),
-    JobPosting(
-        title="Software Engineer",
-        company="TechCorp",
-        url="https://example.com/jobs/software-engineer",
-        description="Design and implement scalable software systems.",
-    ),
-    JobPosting(
-        title="Django Developer",
-        company="Example Labs",
-        url="https://example.com/jobs/django-developer",
-        description="Develop and maintain Django applications.",
-    ),
-]
-
-JobPosting.objects.bulk_create(jobs)
-```
-
-Create applications with different statuses:
-
-```python
-for job, status in zip(
-    JobPosting.objects.all(),
-    [
-        JobApplication.Status.SAVED,
-        JobApplication.Status.APPLIED,
-        JobApplication.Status.INTERVIEW,
-        JobApplication.Status.OFFER,
-        JobApplication.Status.REJECTED,
-    ],
-):
-    JobApplication.objects.create(
-        job_posting=job,
-        status=status,
-    )
-```
-
----
-
-#### Verify the Records
-
-Check the number of job postings:
-
-```python
-JobPosting.objects.count()
-```
-
-Expected:
-
-```shell
-5
-```
-
-Check applications:
-
-```python
-JobApplication.objects.count()
-```
-
-Expected:
-
-```shell
-5
-```
-
-Inspect the data:
 
 ```python
 JobApplication.objects.values(
@@ -681,213 +386,56 @@ JobApplication.objects.values(
 )
 ```
 
----
+## Django REST Framework
 
-### Part 8 — Django REST Framework
-
-**Django REST Framework (DRF)** is a toolkit for building Web APIs with Django.
-
-CareerPilot needs DRF so that the React frontend can communicate with the Django backend.
-
-The architecture becomes:
-
-```shell
-React + TypeScript
-       │
-       │ HTTP / JSON
-       ▼
-Django REST Framework
-       │
-       ▼
-Django ORM
-       │
-       ▼
-PostgreSQL
-```
-
----
-
-#### Install DRF
+Installed DRF:
 
 ```bash
 uv add djangorestframework
 ```
 
-Register it in:
+Added it to `INSTALLED_APPS`.
 
-```shell
-backend/config/settings.py
+The architecture became:
+
+```text
+React + TypeScript
+        ↓
+HTTP / JSON
+        ↓
+Django REST Framework
+        ↓
+Serializer
+        ↓
+Django ORM
+        ↓
+Database
 ```
 
-```python
-INSTALLED_APPS = [
-    # Django apps...
-    "rest_framework",
-    "jobs",
-]
-```
+## Serializers
 
----
+Created serializers for jobs and applications.
 
-### Part 9 — Serializers
-
-A serializer converts complex Python/Django objects into native Python data types that can be rendered as JSON.
-
-Serializers also handle **deserialization**, allowing incoming data to be validated and converted into Python/Django objects.
-
-Create:
-
-```shell
-backend/jobs/serializers.py
-```
-
-```python
-from rest_framework import serializers
-
-from .models import JobApplication, JobPosting
-
-
-class JobPostingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobPosting
-        fields = [
-            "id",
-            "title",
-            "company",
-            "url",
-            "description",
-        ]
-
-
-class JobApplicationSerializer(serializers.ModelSerializer):
-    job_posting = JobPostingSerializer(read_only=True)
-
-    class Meta:
-        model = JobApplication
-        fields = [
-            "id",
-            "job_posting",
-            "status",
-            "created_at",
-            "updated_at",
-        ]
-```
-
----
-
-#### Nested Serializer
-
-The `JobApplicationSerializer` nests the related `JobPosting`:
+The application serializer initially nested the job posting:
 
 ```python
 job_posting = JobPostingSerializer(read_only=True)
 ```
 
-Without nesting, the API could return:
+This allowed the API to return application information together with the associated job.
 
-```json
-{
-    "id": 1,
-    "job_posting": 3,
-    "status": "saved"
-}
-```
+## Generic Views
 
-With nesting:
-
-```json
-{
-    "id": 1,
-    "job_posting": {
-        "id": 3,
-        "title": "Python Developer",
-        "company": "Example Corp",
-        "url": "https://example.com/jobs/123",
-        "description": "..."
-    },
-    "status": "saved",
-    "created_at": "...",
-    "updated_at": "..."
-}
-```
-
-The nested representation makes the response easier for the frontend to consume.
-
----
-
-### Part 10 — DRF Generic Views
-
-Django views receive HTTP requests and return HTTP responses.
-
-DRF provides generic API views that handle common API operations with less custom code.
-
-For CareerPilot, we use:
-
-* `ListAPIView`
-* `ListCreateAPIView`
-
-Create/update:
-
-```shell
-backend/jobs/views.py
-```
+Used DRF generic views:
 
 ```python
-from rest_framework import generics
-
-from .models import JobApplication, JobPosting
-from .serializers import (
-    JobApplicationSerializer,
-    JobPostingSerializer,
-)
-
-
-class JobPostingListCreateView(generics.ListCreateAPIView):
-    queryset = JobPosting.objects.all()
-    serializer_class = JobPostingSerializer
-
-
-class JobApplicationListView(generics.ListAPIView):
-    serializer_class = JobApplicationSerializer
-
-    def get_queryset(self):
-        queryset = JobApplication.objects.select_related("job_posting")
-
-        status = self.request.query_params.get("status")
-
-        if status:
-            queryset = queryset.filter(status=status)
-
-        return queryset
+generics.ListAPIView
+generics.ListCreateAPIView
 ```
 
----
+The initial endpoints were:
 
-#### Why `select_related()`?
-
-The application references a job posting:
-
-```python
-job_posting = models.ForeignKey(...)
-```
-
-The API needs information from both objects.
-
-```python
-JobApplication.objects.select_related("job_posting")
-```
-
-tells Django to retrieve the related `JobPosting` efficiently as part of the database query.
-
-This helps avoid unnecessary database queries when serializing the nested job posting.
-
----
-
-### Part 11 — API Endpoints
-
-At this stage, CareerPilot supports:
-
-```shell
+```text
 GET  /api/applications/
 GET  /api/applications/?status=saved
 
@@ -895,190 +443,552 @@ GET  /api/job-postings/
 POST /api/job-postings/
 ```
 
-We intentionally do **not** implement update/delete endpoints yet.
+The application endpoint supported status filtering through a query parameter.
 
-The goal is to create a thin vertical slice rather than a complete CRUD API.
+## `select_related`
 
----
-
-### Part 12 — URLs
-
-Create:
-
-```shell
-backend/jobs/urls.py
-```
+Used:
 
 ```python
-from django.urls import path
-
-from .views import (
-    JobApplicationListView,
-    JobPostingListCreateView,
-)
-
-
-urlpatterns = [
-    path(
-        "job-postings/",
-        JobPostingListCreateView.as_view(),
-        name="job-posting-list-create",
-    ),
-    path(
-        "applications/",
-        JobApplicationListView.as_view(),
-        name="job-application-list",
-    ),
-]
+JobApplication.objects.select_related("job_posting")
 ```
 
-Then modify:
+because the API needed information from the related job posting.
 
-```shell
-backend/config/urls.py
+This allows Django to retrieve the foreign-key relationship efficiently instead of unnecessarily querying the database for each related object.
+
+## React API Integration
+
+Created a frontend API module rather than placing `fetch()` calls directly inside components.
+
+The architecture became:
+
+```text
+React Component
+      ↓
+Frontend API Module
+      ↓
+Django REST API
+      ↓
+Django ORM
+      ↓
+Database
 ```
 
-```python
-from django.contrib import admin
-from django.urls import include, path
+Implemented:
 
-
-urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/", include("jobs.urls")),
-]
+```text
+GET /api/applications/?status=saved
+POST /api/job-postings/
 ```
 
-The resulting API is:
+## Vite Proxy
 
-```shell
-/api/job-postings/
-/api/applications/
-/api/applications/?status=saved
-```
-
----
-
-### Part 13 — Test the Backend
-
-Start Django:
-
-```bash
-uv run python manage.py runserver
-```
-
-Test:
-
-```shell
-http://127.0.0.1:8000/api/applications/?status=saved
-```
-
-The endpoint should return the saved applications from the database.
-
-Also test:
-
-```shell
-http://127.0.0.1:8000/api/job-postings/
-```
-
-DRF provides a browsable API during development.
-
-A test POST can use:
-
-```json
-{
-    "title": "Python Developer",
-    "company": "Acme Technologies",
-    "url": "https://example.com/jobs/python-developer",
-    "description": "Develop backend services using Python."
-}
-```
-
-Verify that the new record appears in Django Admin or the Django Shell.
-
----
-
-### Part 14 — Configure Vite Proxy
-
-React and Django run on different development servers.
-
-Instead of introducing CORS configuration immediately, Vite can proxy `/api` requests to Django.
-
-Open:
-
-```shell
-frontend/vite.config.ts
-```
-
-Configure:
+Configured Vite to proxy `/api` requests to Django:
 
 ```typescript
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-
-
-export default defineConfig({
-    plugins: [react()],
-    server: {
-        proxy: {
-            "/api": {
-                target: "http://127.0.0.1:8000",
-                changeOrigin: true,
-            },
+server: {
+    proxy: {
+        "/api": {
+            target: "http://127.0.0.1:8000",
+            changeOrigin: true,
         },
     },
-});
+},
 ```
 
-Now React can make:
+This allows frontend code to use:
 
 ```typescript
-fetch("/api/applications/?status=saved");
+fetch("/api/applications/")
 ```
 
-instead of:
+instead of hardcoding the Django development server URL.
 
-```typescript
-fetch("http://127.0.0.1:8000/api/applications/?status=saved");
+## Frontend
+
+Built:
+
+* saved applications page;
+* job posting form;
+* controlled form inputs;
+* API abstraction;
+* loading state;
+* error state;
+* successful POST handling.
+
+## Decisions
+
+### Thin vertical slice
+
+The goal was not to implement complete CRUD immediately.
+
+Instead, Day 2 focused on proving the complete path:
+
+```text
+React
+ ↓
+HTTP
+ ↓
+DRF
+ ↓
+Serializer
+ ↓
+Django ORM
+ ↓
+Database
 ```
 
-This keeps the frontend independent of the backend's development hostname.
+This reduced the amount of simultaneous complexity.
+
+### API calls separated from components
+
+API logic was kept in dedicated modules so components remain responsible primarily for presentation and user interaction.
+
+## Testing
+
+Verified:
+
+* migrations apply;
+* models appear in Django Admin;
+* test records can be created;
+* application filtering works;
+* nested job data is returned;
+* `GET` requests work from React;
+* `POST` requests create database records;
+* created jobs appear in Django Admin/Shell.
+
+## Problems / Fixes
+
+The initial model/API naming was later identified as too verbose:
+
+```text
+JobPosting
+JobApplication
+```
+
+The product domain was simplified to:
+
+```text
+Job
+Application
+```
+
+This naming change was carried forward into later implementation.
+
+## Interview Takeaways
+
+### What does a Django model represent?
+
+A Django model is a Python representation of a database entity and provides the ORM interface for querying and modifying that entity.
+
+### What does a serializer do?
+
+A DRF serializer handles serialization of Python/Django objects into API-friendly representations and validates/deserializes incoming data.
+
+### Why use `select_related()`?
+
+For foreign-key or one-to-one relationships, `select_related()` can retrieve related objects as part of the database query, reducing additional queries when those objects are accessed.
+
+### Why separate API modules from React components?
+
+It keeps network communication separate from UI logic, making components easier to test, reuse, and maintain.
+
+## Files Changed
+
+```text
+backend/
+└── jobs/
+    ├── models.py
+    ├── admin.py
+    ├── serializers.py
+    ├── views.py
+    ├── urls.py
+    └── migrations/
+
+frontend/
+└── src/
+    ├── api/
+    │   └── jobs.ts
+    ├── components/
+    │   └── JobPostingForm.tsx
+    ├── pages/
+    │   └── SavedApplicationsPage.tsx
+    └── types/
+        └── job.ts
+```
+
+## Result
+
+CareerPilot had its first working full-stack vertical slice.
+
+A user could retrieve saved applications from Django through React and create job postings through the frontend.
 
 ---
 
-### Part 15 — Frontend Types
+# Day 3 — PostgreSQL, Database Design & DRF CRUD
 
-Create:
+## Goals
 
-```shell
-frontend/src/types/job.ts
+* Replace the initial SQLite database with PostgreSQL.
+* Run PostgreSQL using Docker.
+* Understand relational database design independently of Django.
+* Practice SQL fundamentals.
+* Connect Django to PostgreSQL.
+* Expand the API toward CRUD functionality.
+* Understand the relationship between Django migrations and direct SQL.
+
+## Implementation
+
+### PostgreSQL with Docker
+
+PostgreSQL was introduced as the primary application database.
+
+Docker was used to avoid requiring PostgreSQL to be installed directly on the development machine.
+
+The development architecture became:
+
+```text
+React
+   ↓
+Django / DRF
+   ↓
+PostgreSQL
 ```
 
-```typescript
-export interface JobPosting {
-    id: number;
-    title: string;
-    company: string;
-    url: string;
-    description: string;
-}
+Docker Compose manages the database container.
 
+### Configuration Mistake
 
-export interface JobApplication {
-    id: number;
-    job_posting: JobPosting;
-    status: string;
-    created_at: string;
-    updated_at: string;
-}
+The PostgreSQL environment variable was initially written incorrectly:
+
+```yaml
+POSTGRESS_PASSWORD
 ```
 
-For now, `status` remains a `string`.
+The correct variable is:
 
-Later, it can be made more type-safe:
+```yaml
+POSTGRES_PASSWORD
+```
+
+The issue reinforced the importance of checking official environment variable names when configuring infrastructure.
+
+---
+
+## Django PostgreSQL Connection
+
+Django was configured to connect to the PostgreSQL container.
+
+After changing the database configuration, migrations were applied:
+
+```bash
+uv run python manage.py migrate
+```
+
+The database schema was then verified directly through PostgreSQL.
+
+---
+
+## Independent SQL Practice
+
+SQL exercises were performed independently of Django to strengthen understanding of the underlying relational database.
+
+Topics included:
+
+* `CREATE TABLE`;
+* primary keys;
+* foreign keys;
+* unique constraints;
+* indexes;
+* joins;
+* `GROUP BY`;
+* `HAVING`;
+* `DISTINCT ON`;
+* window functions;
+* normalization;
+* transactions;
+* ACID properties.
+
+### Schema Design
+
+The SQL exercise modeled:
+
+```text
+users
+jobs
+applications
+```
+
+with foreign-key relationships.
+
+A typo was found in the application status constraint:
+
+```sql
+'rejectted'
+```
+
+and corrected to:
+
+```sql
+'rejected'
+```
+
+---
+
+## Django ORM vs. Raw SQL
+
+One important distinction learned on Day 3:
+
+Django migrations and direct SQL are not competing approaches.
+
+Django migrations are the application's **schema migration mechanism**.
+
+Direct SQL exercises were used to understand what the database itself is doing.
+
+Conceptually:
+
+```text
+Django Model
+    ↓
+Migration
+    ↓
+Database Schema
+```
+
+while SQL knowledge explains the underlying database operations.
+
+---
+
+## DRF CRUD
+
+The API was expanded toward the CareerPilot job-management workflow.
+
+The API architecture became:
+
+```text
+GET
+POST
+PATCH
+DELETE
+```
+
+for job resources.
+
+The job endpoints evolved toward:
+
+```text
+GET    /api/jobs/
+POST   /api/jobs/
+GET    /api/jobs/<id>/
+PATCH  /api/jobs/<id>/
+DELETE /api/jobs/<id>/
+```
+
+Application retrieval continued to support filtering:
+
+```text
+GET /api/applications/
+GET /api/applications/?status=saved
+```
+
+## Naming Decision
+
+The original names:
+
+```text
+JobPosting
+JobApplication
+job_posting
+```
+
+were simplified to:
+
+```text
+Job
+Application
+job
+```
+
+This better matches the language used throughout the product.
+
+The generic view was also named:
+
+```python
+JobListView
+```
+
+rather than:
+
+```python
+JobListCreateView
+```
+
+because `ListCreateAPIView` already communicates that the view supports both operations.
+
+## Decisions
+
+### PostgreSQL instead of SQLite
+
+PostgreSQL was selected because it better represents the production database environment CareerPilot is expected to use.
+
+### SQL practice separately from Django
+
+Raw SQL exercises were intentionally kept separate from the Django ORM implementation.
+
+The goal was to understand both:
+
+```text
+Application-level abstraction
+        ↓
+Django ORM
+```
+
+and:
+
+```text
+Database-level concepts
+        ↓
+SQL
+```
+
+### Backend filtering
+
+Application status filtering was kept on the backend:
+
+```text
+GET /api/applications/?status=applied
+```
+
+rather than retrieving every application and filtering only in React.
+
+This provides a better foundation for:
+
+* larger datasets;
+* pagination;
+* database-level filtering;
+* composable API queries.
+
+## Testing
+
+Verified:
+
+* PostgreSQL container starts;
+* Django connects to PostgreSQL;
+* migrations apply successfully;
+* database tables exist;
+* SQL queries work directly;
+* job CRUD endpoints work;
+* application status filtering works.
+
+## Problems / Fixes
+
+### PostgreSQL environment variable typo
+
+Fixed:
+
+```text
+POSTGRESS_PASSWORD
+```
+
+to:
+
+```text
+POSTGRES_PASSWORD
+```
+
+### Status constraint typo
+
+Fixed:
+
+```text
+rejectted
+```
+
+to:
+
+```text
+rejected
+```
+
+### Naming cleanup
+
+Replaced the verbose domain names with:
+
+```text
+Job
+Application
+job
+```
+
+to keep the application API and codebase consistent.
+
+## Interview Takeaways
+
+### Why PostgreSQL?
+
+PostgreSQL is a production-grade relational database with strong support for constraints, transactions, indexing, joins, and complex queries.
+
+### What is normalization?
+
+Normalization organizes relational data to reduce unnecessary duplication and update anomalies.
+
+### What is the difference between `select_related()` and a normal query?
+
+`select_related()` can use a SQL join to retrieve foreign-key/one-to-one related objects efficiently.
+
+### Why filter at the database level?
+
+Database filtering reduces unnecessary data transfer and allows the database to perform the filtering efficiently, especially as the dataset grows.
+
+## Files Changed
+
+```text
+backend/
+├── config/
+│   └── settings.py
+├── jobs/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   └── urls.py
+└── docker-compose.yml
+
+frontend/
+└── src/
+    ├── api/
+    ├── components/
+    ├── pages/
+    └── types/
+```
+
+## Result
+
+CareerPilot moved from a basic SQLite prototype to a PostgreSQL-backed application with a more complete REST API and stronger understanding of the underlying relational database.
+
+---
+
+# Day 4 — React + TypeScript Job Management UI
+
+## Goals
+
+* Build the main job-management UI.
+* Strengthen TypeScript usage.
+* Create reusable React components.
+* Separate UI, state, and API responsibilities.
+* Support creating, editing, and deleting jobs.
+* Add client-side validation.
+* Prevent duplicate submissions.
+* Build a responsive job dashboard.
+
+## Implementation
+
+### TypeScript Domain Types
+
+Introduced explicit frontend domain types.
 
 ```typescript
-type ApplicationStatus =
+export type JobStatus =
     | "saved"
     | "applied"
     | "interview"
@@ -1086,569 +996,882 @@ type ApplicationStatus =
     | "rejected";
 ```
 
+The `Job` interface represents the backend job resource.
+
+The `Application` interface represents an application and its related job.
+
+Using a union type for status prevents arbitrary strings from being used as application statuses.
+
 ---
 
-### Part 16 — Frontend API Module
+## Reusable Components
 
-API calls should not be scattered throughout React components.
+Built:
 
-Create:
-
-```shell
-frontend/src/api/jobs.ts
+```text
+JobCard
+JobForm
 ```
+
+The responsibilities were intentionally separated.
+
+```text
+JobForm
+    ↓
+Form state
+Validation
+Form UI
+
+JobCard
+    ↓
+Job display
+Edit/delete actions
+
+JobsPage
+    ↓
+UI state
+Operation selection
+
+useJobs
+    ↓
+Application state
+Mutations
+
+api/jobs.ts
+    ↓
+HTTP requests
+```
+
+This created a clear separation between presentation, state management, and networking.
+
+---
+
+## `useJobs()` Hook
+
+Created a custom hook to centralize job state:
+
+```text
+jobs
+loading
+error
+addJob
+updateJob
+deleteJob
+reload
+```
+
+The hook handles:
+
+* loading jobs;
+* creating jobs;
+* updating jobs;
+* deleting jobs;
+* updating local state after mutations;
+* loading/error state.
+
+`useCallback()` was used for mutation and loading functions where stable function references were useful.
+
+---
+
+## Add Job UX
+
+The add form was intentionally not implemented as a permanent sidebar.
+
+Instead:
+
+```text
++ Add Job
+     ↓
+Temporary Job Card
+     ↓
+JobForm
+```
+
+The add button is disabled while the temporary form is open.
+
+Cancelling removes only the temporary card.
+
+A successful submission removes the temporary form and adds the created job to the dashboard.
+
+---
+
+## Edit Job UX
+
+Editing an existing job replaces that card with the same reusable `JobForm`.
+
+```text
+JobCard
+   ↓
+Edit
+   ↓
+JobForm(mode="edit")
+```
+
+This avoids maintaining separate add and edit forms.
+
+---
+
+## Validation
+
+Added frontend validation for job form inputs.
+
+The UI also prevents duplicate submissions while an API request is running.
+
+This avoids accidentally creating multiple identical records from repeated clicks.
+
+## API Integration
+
+The frontend API layer supports:
+
+```text
+GET
+POST
+PATCH
+DELETE
+```
+
+for jobs.
+
+The custom hook updates React state after successful mutations instead of requiring a full page reload.
+
+## Responsive UI
+
+The dashboard was implemented to work across desktop and mobile layouts.
+
+## Decisions
+
+### One reusable form
+
+Add and edit operations use the same `JobForm`.
+
+The operation is determined by the parent through props.
+
+This prevents duplicated form logic.
+
+### State ownership
+
+State ownership was deliberately divided:
+
+```text
+JobForm
+    → local form state
+
+JobsPage / JobCard
+    → UI operation state
+
+useJobs
+    → application state
+
+api/jobs.ts
+    → HTTP communication
+```
+
+### Backend as source of truth
+
+The frontend updates local state only after the backend operation succeeds.
+
+This prevents the UI from claiming a mutation succeeded when the server rejected it.
+
+## Testing
+
+Verified:
+
+* jobs load from the backend;
+* new jobs can be created;
+* duplicate submission is prevented;
+* existing jobs can be edited;
+* jobs can be deleted;
+* form validation works;
+* cancelling an add form restores the dashboard;
+* edit mode uses the existing job values;
+* responsive layout works on desktop/mobile sizes.
+
+## Problems / Fixes
+
+A React/TypeScript rendering issue occurred around mapping data:
+
+```text
+Type 'void[]' is not assignable to type 'ReactNode'
+```
+
+The issue came from an arrow-function callback used in JSX that did not return the JSX element.
+
+The fix was to ensure the `map()` callback returns the rendered element.
+
+This reinforced an important React/JavaScript distinction:
+
+```tsx
+items.map((item) => (
+    <Component />
+))
+```
+
+returns elements, while:
+
+```tsx
+items.map((item) => {
+    <Component />
+})
+```
+
+returns `undefined` because the block body has no explicit `return`.
+
+## Interview Takeaways
+
+### Why use a custom hook?
+
+A custom hook allows reusable stateful logic to be extracted from components without creating a separate component hierarchy.
+
+### Controlled vs uncontrolled components
+
+CareerPilot uses controlled inputs:
+
+```text
+React state
+    ↕
+input value
+```
+
+The input's value is controlled by React state.
+
+### Why use TypeScript interfaces?
+
+Interfaces provide compile-time contracts for data structures, improve editor support, catch mismatches early, and make refactoring safer.
+
+### Why does React rerender?
+
+A state update schedules a component rerender.
+
+React then reconciles the new element tree and updates the necessary parts of the DOM rather than blindly replacing the entire DOM.
+
+## Files Changed
+
+```text
+frontend/src/
+├── api/
+│   └── jobs.ts
+├── components/
+│   ├── JobCard.tsx
+│   ├── JobForm.tsx
+│   └── AddJobCard.tsx
+├── hooks/
+│   └── useJobs.ts
+├── pages/
+│   └── JobsPage.tsx
+└── types/
+    └── jobs.ts
+```
+
+## Result
+
+CareerPilot gained a functional job-management dashboard supporting:
+
+* loading jobs;
+* creating jobs;
+* editing jobs;
+* deleting jobs;
+* validation;
+* duplicate-submission prevention;
+* responsive UI.
+
+The frontend architecture also became significantly more reusable and maintainable.
+
+---
+
+# Day 5 — Authentication, Authorization & Ownership
+
+## Goals
+
+* Understand authentication versus authorization.
+* Add user registration.
+* Add login and logout.
+* Protect the job API.
+* Associate jobs with users.
+* Ensure users can only access their own data.
+* Protect application data.
+* Connect authentication state to React.
+* Verify security boundaries manually.
+
+## Implementation
+
+### Authentication
+
+Added Django REST Framework token authentication.
+
+Enabled:
+
+```text
+rest_framework.authtoken
+```
+
+Configured DRF to use:
+
+```python
+TokenAuthentication
+```
+
+Authentication endpoints:
+
+```text
+POST /api/auth/register/
+POST /api/auth/login/
+POST /api/auth/logout/
+```
+
+---
+
+## Registration
+
+Created a registration serializer using Django's built-in `User` model.
+
+User passwords are created using:
+
+```python
+User.objects.create_user(...)
+```
+
+rather than directly creating a `User` object.
+
+This ensures Django hashes the password instead of storing the raw password.
+
+Registration returns non-sensitive user information.
+
+The password is never returned in the API response.
+
+---
+
+## Login
+
+Login authenticates the supplied username and password.
+
+A token is created or retrieved:
+
+```python
+Token.objects.get_or_create(user=user)
+```
+
+The API returns:
+
+```json
+{
+    "token": "...",
+    "user": {
+        "id": 1,
+        "username": "...",
+        "email": "..."
+    }
+}
+```
+
+---
+
+## Logout
+
+Authenticated users can invalidate their token by deleting the authentication token.
+
+The logout endpoint requires:
+
+```python
+IsAuthenticated
+```
+
+---
+
+# Authorization and Data Ownership
+
+Authentication answers:
+
+> Who are you?
+
+Authorization answers:
+
+> What are you allowed to access?
+
+For CareerPilot, every user's jobs and applications must be isolated from other users.
+
+## Job Ownership
+
+The `Job` model was updated to include an explicit user relationship:
+
+```python
+user = models.ForeignKey(
+    User,
+    on_delete=models.CASCADE,
+    related_name="jobs",
+)
+```
+
+The intended structure is:
+
+```text
+User
+ ├── jobs
+ │    └── Job
+ │
+ └── applications
+      └── Application
+```
+
+## Application Ownership
+
+`Application` also has a direct user relationship:
+
+```python
+user = models.ForeignKey(
+    User,
+    on_delete=models.CASCADE,
+    related_name="applications",
+)
+```
+
+It also references its job:
+
+```python
+job = models.ForeignKey(
+    Job,
+    on_delete=models.CASCADE,
+    related_name="applications",
+)
+```
+
+Therefore:
+
+```text
+Application
+├── user → User
+└── job → Job → user
+```
+
+The direct user relationship is somewhat redundant because ownership can technically be inferred through `job.user`.
+
+It was nevertheless chosen because it makes application filtering and authorization explicit and simpler:
+
+```python
+Application.objects.filter(user=request.user)
+```
+
+This also provides flexibility if application ownership later becomes independent of a particular job relationship.
+
+---
+
+# Protecting Job APIs
+
+The job list endpoint requires authentication:
+
+```python
+permission_classes = [IsAuthenticated]
+```
+
+The queryset is restricted:
+
+```python
+Job.objects.filter(user=self.request.user)
+```
+
+Creation assigns ownership from the authenticated request:
+
+```python
+serializer.save(user=self.request.user)
+```
+
+The client therefore does not control the job owner.
+
+The detail endpoint uses the same ownership-restricted queryset.
+
+This creates an important security property:
+
+```text
+User A requests User B's Job ID
+                ↓
+Job is not in User A's queryset
+                ↓
+404 Not Found
+```
+
+The API does not expose another user's job.
+
+---
+
+# Protecting Applications
+
+Application queries are similarly restricted:
+
+```python
+Application.objects.filter(
+    user=self.request.user
+)
+```
+
+The related job is loaded efficiently:
+
+```python
+.select_related("job")
+```
+
+Status filtering remains available:
+
+```text
+GET /api/applications/?status=applied
+```
+
+The status query parameter can also be validated against:
+
+```python
+Application.Status.values
+```
+
+to prevent invalid application statuses from silently producing misleading results.
+
+---
+
+# Serializer Ownership
+
+The client should not be allowed to submit:
+
+```json
+{
+    "user": 2
+}
+```
+
+and assign ownership to another user.
+
+Ownership is therefore assigned by the backend using:
+
+```python
+request.user
+```
+
+rather than trusted client input.
+
+This is an important authorization boundary.
+
+---
+
+# React Authentication
+
+Added frontend authentication types:
 
 ```typescript
-import type { JobApplication, JobPosting } from "../types/job";
-
-
-export async function getSavedApplications(): Promise<JobApplication[]> {
-    const response = await fetch(
-        "/api/applications/?status=saved",
-    );
-
-    if (!response.ok) {
-        throw new Error(
-            "Failed to fetch saved applications",
-        );
-    }
-
-    return response.json();
-}
-
-
-export interface CreateJobPostingInput {
-    title: string;
-    company: string;
-    url: string;
-    description: string;
-}
-
-
-export async function createJobPosting(
-    jobPosting: CreateJobPostingInput,
-): Promise<JobPosting> {
-    const response = await fetch(
-        "/api/job-postings/",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(jobPosting),
-        },
-    );
-
-    if (!response.ok) {
-        throw new Error(
-            "Failed to create job posting",
-        );
-    }
-
-    return response.json();
+export interface AuthUser {
+    id: number;
+    username: string;
+    email: string;
 }
 ```
 
-This creates a clean boundary:
+Authentication state tracks:
 
-```shell
-React Component
-       ↓
-src/api/jobs.ts
-       ↓
-Django REST API
-       ↓
-Django ORM
-       ↓
-Database
+```text
+token
+user
+isAuthenticated
 ```
+
+Implemented temporary authentication logic through a `useAuth()` hook.
+
+Login stores the returned token and user.
+
+Logout clears the local authentication state after invalidating the backend token.
 
 ---
 
-### Part 17 — Saved Applications Page
+# Authenticated API Requests
 
-Create:
+Created an API helper that attaches the authentication token:
 
-```shell
-frontend/src/pages/SavedApplicationsPage.tsx
+```text
+Authorization: Token <token>
 ```
 
-```tsx
-import { useEffect, useState } from "react";
+The frontend can therefore make authenticated requests without repeating the authorization header logic in every API function.
 
-import { getSavedApplications } from "../api/jobs";
-import type { JobApplication } from "../types/job";
+The AI provider key will follow the same security principle later:
 
-
-export function SavedApplicationsPage() {
-    const [applications, setApplications] = useState<
-        JobApplication[]
-    >([]);
-
-    const [loading, setLoading] = useState(true);
-
-    const [error, setError] = useState<string | null>(
-        null,
-    );
-
-
-    useEffect(() => {
-        async function loadApplications() {
-            try {
-                const data =
-                    await getSavedApplications();
-
-                setApplications(data);
-            } catch {
-                setError(
-                    "Unable to load saved applications.",
-                );
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        loadApplications();
-    }, []);
-
-
-    if (loading) {
-        return <p>Loading applications...</p>;
-    }
-
-
-    if (error) {
-        return <p>{error}</p>;
-    }
-
-
-    return (
-        <section>
-            <h1>Saved Applications</h1>
-
-            {applications.length === 0 ? (
-                <p>No saved applications.</p>
-            ) : (
-                <ul>
-                    {applications.map((application) => (
-                        <li key={application.id}>
-                            <h2>
-                                {
-                                    application
-                                        .job_posting
-                                        .title
-                                }
-                            </h2>
-
-                            <p>
-                                {
-                                    application
-                                        .job_posting
-                                        .company
-                                }
-                            </p>
-
-                            <a
-                                href={
-                                    application
-                                        .job_posting
-                                        .url
-                                }
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                View job posting
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </section>
-    );
-}
-```
-
-This completes:
-
-> Add a page displaying saved job applications.
-
-It also performs the first real frontend → backend `GET` request.
-
----
-
-### Part 18 — Job Posting Form
-
-Create:
-
-```shell
-frontend/src/components/JobPostingForm.tsx
-```
-
-```tsx
-import {
-    useState,
-    type SubmitEvent,
-} from "react";
-
-import { createJobPosting } from "../api/jobs";
-
-
-export function JobPostingForm() {
-    const [title, setTitle] = useState("");
-    const [company, setCompany] = useState("");
-    const [url, setUrl] = useState("");
-    const [description, setDescription] =
-        useState("");
-
-    const [message, setMessage] =
-        useState<string | null>(null);
-
-
-    async function handleSubmit(
-        event: SubmitEvent<HTMLFormElement>,
-    ) {
-        event.preventDefault();
-
-        try {
-            const jobPosting =
-                await createJobPosting({
-                    title,
-                    company,
-                    url,
-                    description,
-                });
-
-            setMessage(
-                `Created ${jobPosting.title}`,
-            );
-
-            setTitle("");
-            setCompany("");
-            setUrl("");
-            setDescription("");
-        } catch {
-            setMessage(
-                "Unable to create job posting.",
-            );
-        }
-    }
-
-
-    return (
-        <form onSubmit={handleSubmit}>
-            <h2>Add Job Posting</h2>
-
-            <div>
-                <label htmlFor="title">
-                    Title
-                </label>
-
-                <input
-                    id="title"
-                    value={title}
-                    onChange={(event) =>
-                        setTitle(
-                            event.target.value,
-                        )
-                    }
-                    required
-                />
-            </div>
-
-            <div>
-                <label htmlFor="company">
-                    Company
-                </label>
-
-                <input
-                    id="company"
-                    value={company}
-                    onChange={(event) =>
-                        setCompany(
-                            event.target.value,
-                        )
-                    }
-                    required
-                />
-            </div>
-
-            <div>
-                <label htmlFor="url">
-                    URL
-                </label>
-
-                <input
-                    id="url"
-                    type="url"
-                    value={url}
-                    onChange={(event) =>
-                        setUrl(
-                            event.target.value,
-                        )
-                    }
-                    required
-                />
-            </div>
-
-            <div>
-                <label htmlFor="description">
-                    Description
-                </label>
-
-                <textarea
-                    id="description"
-                    value={description}
-                    onChange={(event) =>
-                        setDescription(
-                            event.target.value,
-                        )
-                    }
-                    required
-                />
-            </div>
-
-            <button type="submit">
-                Add Job
-            </button>
-
-            {message && <p>{message}</p>}
-        </form>
-    );
-}
-```
-
-This completes:
-
-> Add a form that creates a job posting with title, company, URL, and description.
-
-It also performs a real frontend → backend `POST` request.
-
----
-
-### Part 19 — Connect the Components
-
-For Day 2, React Router is not necessary yet.
-
-Use the components directly in:
-
-```shell
-frontend/src/App.tsx
-```
-
-```tsx
-import { JobPostingForm } from "./components/JobPostingForm";
-import { SavedApplicationsPage } from "./pages/SavedApplicationsPage";
-
-
-function App() {
-    return (
-        <main>
-            <SavedApplicationsPage />
-
-            <hr />
-
-            <JobPostingForm />
-        </main>
-    );
-}
-
-
-export default App;
-```
-
-Later, when the application has multiple screens, React Router can provide routes such as:
-
-```shell
-/applications
-/jobs/new
-```
-
-There is no need to introduce routing simply because the component is called a "page."
-
----
-
-### Part 20 — Run CareerPilot
-
-#### Backend
-
-Terminal 1:
-
-```bash
-cd backend
-uv run python manage.py runserver
-```
-
-#### Frontend
-
-Terminal 2:
-
-```bash
-cd frontend
-npm run dev
-```
-
-Open the Vite development URL:
-
-```shell
-http://localhost:5173
-```
-
-The frontend should now:
-
-1. Request saved applications from Django.
-2. Display the returned applications.
-3. Submit new job postings to Django.
-4. Persist those postings in the database.
-
----
-
-### Day 2 Architecture
-
-The complete Day 2 flow is:
-
-```shell
-                    CareerPilot
-                         │
-                         ▼
-              React + TypeScript
-                         │
-                         │ HTTP / JSON
-                         ▼
-             Django REST Framework
-                         │
-                  ┌──────┴──────┐
-                  ▼             ▼
-             Serializers       Views
-                                │
-                                ▼
-                         Django ORM
-                                │
-                                ▼
-                           Database
-```
-
-For the saved applications flow:
-
-```shell
-SavedApplicationsPage
-        │
-        ▼
-getSavedApplications()
-        │
-        │ GET /api/applications/?status=saved
-        ▼
-JobApplicationListView
-        │
-        ▼
-JobApplicationSerializer
-        │
-        ▼
-JSON
-        │
-        ▼
-React state
-        │
-        ▼
-Rendered applications
-```
-
-For creating a job posting:
-
-```shell
-JobPostingForm
-      │
-      ▼
-createJobPosting()
-      │
-      │ POST /api/job-postings/
-      ▼
-JobPostingListCreateView
-      │
-      ▼
-JobPostingSerializer
-      │
-      ▼
-JobPosting.objects.create(...)
-      │
-      ▼
-Database
-```
-
----
-
-### Day 2 Key Concepts
-
-#### Django
-
-* Project vs. app
-* Models
-* ORM
-* ForeignKey
-* Model relationships
-* `TextChoices`
-* Automatic primary keys
-* Migrations
-* Django Admin
-* Django Shell
-
-#### DRF
-
-* Serializers
-* `ModelSerializer`
-* Nested serializers
-* API views
-* Generic views
-* `ListAPIView`
-* `ListCreateAPIView`
-* Query parameters
-* `select_related`
-
-#### React + TypeScript
-
-* Components
-* Props/state
-* `useState`
-* `useEffect`
-* Controlled forms
-* TypeScript interfaces
-* API abstraction
-* `fetch`
-* HTTP `GET`
-* HTTP `POST`
-* Vite proxy
-
----
-
-### Day 2 Architecture Principle
-
-The main lesson from Day 2 is:
-
-> **Keep responsibilities separated.**
-
-```shell
+```text
 React
-  → presentation and user interaction
-
-API module
-  → frontend/backend communication
-
-DRF
-  → HTTP API layer
-
-Serializer
-  → data transformation and validation
-
-Django View
-  → request handling and query logic
-
-Django ORM
-  → database interaction
-
-Database
-  → persistent data
+   ↓
+Django API
+   ↓
+AI Provider
 ```
 
-This separation will make CareerPilot easier to extend when authentication, application tracking, job analysis, and interview preparation are introduced later.
+The AI API key will remain server-side and will never be exposed to the React application.
+
+---
+
+# Security Testing
+
+Manual testing focused on authorization boundaries.
+
+### Test 1 — User isolation
+
+Create:
+
+```text
+User A
+User B
+```
+
+Create a job for each user.
+
+Verify:
+
+```text
+User A → GET /api/jobs/
+```
+
+returns only User A's jobs.
+
+### Test 2 — Direct object access
+
+User A attempts to access User B's job ID.
+
+Expected:
+
+```text
+404 Not Found
+```
+
+### Test 3 — Unauthenticated access
+
+Call protected endpoints without authentication.
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+### Test 4 — Invalid token
+
+Send an invalid token.
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+### Test 5 — Registration validation
+
+Test missing:
+
+* username;
+* email;
+* password.
+
+Expected:
+
+```text
+400 Bad Request
+```
+
+### Test 6 — Login validation
+
+Test:
+
+* missing username;
+* missing password;
+* incorrect password.
+
+Expected:
+
+```text
+400 / 401
+```
+
+depending on the validation case.
+
+### Test 7 — Ownership on create
+
+The client must not be able to select the owner of a newly created job.
+
+The authenticated user is assigned by the backend.
+
+### Test 8 — Update/delete ownership
+
+A user must not be able to update or delete another user's job by changing the resource ID.
+
+---
+
+# Decisions
+
+## Explicit ownership
+
+The backend owns authorization decisions.
+
+The frontend never determines which user owns a job or application.
+
+## Queryset-level authorization
+
+Authorization is enforced at the queryset level:
+
+```python
+Job.objects.filter(user=request.user)
+```
+
+rather than retrieving arbitrary objects and checking ownership afterward.
+
+This makes unauthorized objects invisible to the view's object lookup.
+
+## Token authentication
+
+DRF token authentication was selected for the current MVP because it provides a straightforward authentication mechanism for the React + Django architecture.
+
+The authentication implementation can be revisited later if CareerPilot requires a more sophisticated session or token strategy.
+
+## Temporary React auth state
+
+The initial `useAuth()` implementation stores the token in React state.
+
+This is intentionally a first implementation rather than the final authentication architecture.
+
+A page refresh clears the React state, so persistent authentication/session handling still needs to be improved.
+
+---
+
+# Problems / Fixes
+
+### Domain naming inconsistencies
+
+The early implementation used:
+
+```text
+JobPosting
+JobApplication
+job_posting
+```
+
+These were standardized to:
+
+```text
+Job
+Application
+job
+```
+
+### `related_name`
+
+The user relationship uses:
+
+```python
+related_name="jobs"
+```
+
+rather than:
+
+```python
+related_name="job"
+```
+
+so the natural Django API becomes:
+
+```python
+user.jobs.all()
+```
+
+### Authentication state persistence
+
+The first React authentication implementation keeps the token in component state.
+
+This works during the current session but does not survive a browser refresh.
+
+This limitation was documented rather than hiding it behind the initial implementation.
+
+### API ownership
+
+Ownership is assigned server-side rather than trusting values supplied by React.
+
+This prevents clients from attempting to create records for another user.
+
+---
+
+# Interview Takeaways
+
+### Authentication vs. authorization
+
+Authentication identifies the user.
+
+Authorization determines what that authenticated user can access.
+
+### Why filter querysets by `request.user`?
+
+It establishes the authorization boundary before object retrieval and ensures users only operate on resources they own.
+
+### Why not accept `user_id` from the frontend?
+
+The client should not be trusted to decide ownership.
+
+Ownership must come from the authenticated request:
+
+```python
+request.user
+```
+
+### Are passwords encrypted?
+
+No.
+
+Django stores passwords using secure password hashing.
+
+Passwords should not be stored as plaintext.
+
+### Why use `IsAuthenticated`?
+
+It prevents unauthenticated users from accessing protected API endpoints.
+
+### Why can User A receive a 404 for User B's job?
+
+Because User B's job is excluded from User A's queryset.
+
+The detail view therefore cannot retrieve that object.
+
+---
+
+# Files Changed
+
+```text
+backend/
+├── config/
+│   ├── settings.py
+│   └── urls.py
+├── accounts/
+│   ├── serializers.py
+│   ├── views.py
+│   └── urls.py
+└── jobs/
+    ├── models.py
+    ├── serializers.py
+    ├── views.py
+    └── urls.py
+
+frontend/src/
+├── api/
+│   ├── auth.ts
+│   └── jobs.ts
+├── hooks/
+│   └── useAuth.ts
+└── types/
+    └── auth.ts
+```
+
+## Result
+
+CareerPilot now has the foundation for multi-user application tracking.
+
+The backend can:
+
+* register users;
+* authenticate users;
+* issue authentication tokens;
+* log users out;
+* restrict job access by owner;
+* restrict application access by owner;
+* prevent clients from assigning ownership;
+* reject unauthenticated API requests.
+
+The security boundary is now enforced by Django rather than relying on frontend behavior.
 
 ## Day 3 - PostgreSQL & Django REST Framework
 
@@ -1683,7 +1906,7 @@ services:
         environment:
             POSTGRES_DB: careerpilot
             POSTGRES_USER: careerpilot
-            POSTGRESS_PASSWORD: careerpilot
+            POSTGRES_PASSWORD: careerpilot
         ports:
             - "5432:5432"
         volumes:
@@ -1882,7 +2105,7 @@ CREATE TABLE applications (
                 'applied',
                 'interview',
                 'offer',
-                'rejectted'
+                'rejected'
             )
         )
 );
@@ -4016,3 +4239,1347 @@ frontend/src/
 The dashboard now has one reusable form implementation for both job creation and editing, with the Add Job form appearing as a temporary card in the same visual context as an edited job.
 
 No duplicate Add/Edit form markup is maintained.
+
+
+## Day 5 Django Authentication and Security
+
+### 0. Target architecture
+
+By the end of Day 5, the flow should be:
+```shell
+React
+  │
+  │ username + password
+  ▼
+POST /api/auth/register/
+POST /api/auth/login/
+  │
+  │ token
+  ▼
+React stores authentication state
+  │
+  │ Authorization: Token <token>
+  ▼
+Django REST Framework
+  │
+  ├── verifies token
+  ├── identifies request.user
+  │
+  ▼
+Job APIs
+  │
+  └── only return/modify request.user's jobs
+```
+
+The final API should roughly be:
+
+```shell
+POST   /api/auth/register/
+POST   /api/auth/login/
+POST   /api/auth/logout/
+
+GET    /api/jobs/
+POST   /api/jobs/
+GET    /api/jobs/<id>/
+PATCH  /api/jobs/<id>/
+DELETE /api/jobs/<id>/
+
+GET    /api/applications/
+
+```
+---
+
+### 1. Install DRF token authentication
+
+Add the token app to INSTALLED_APPS:
+```python
+INSTALLED_APPS = [
+    # ...
+    "rest_framework",
+    "rest_framework.authtoken",
+]
+```
+Then:
+```shell
+python manage.py migrate
+```
+This creates the token table.
+
+You can verify:
+```shell
+python manage.py showmigrations
+```
+You should see the authtoken migrations applied.
+
+--- 
+
+### 2. Configure DRF authentication
+
+In `settings.py`:
+```python
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+}
+```
+This tells DRF:
+
+> When a request contains Authorization: Token <token>, use that token to identify the user.
+
+Later, we'll be able to access:
+```python
+self.request.user
+```
+inside your views.
+
+---
+
+### 3. Add ownership to `JobPosting`
+
+> [!Note] Naming Changes in Django Backend
+> - `JobPosting` -> `Job`
+> - `JobApplication` -> `Application`
+> - `job_posting` -> `job`
+
+This is necessary before protecting your job API.
+
+Currently you have something like:
+
+```python
+class JobPosting(models.Model):
+    title = models.CharField(max_length=255)
+    company = models.CharField(max_length=255)
+    url = models.URLField()
+    description = models.TextField()
+```
+
+Change it to:
+
+```python
+from django.contrib.auth.models import User
+from django.db import models
+
+
+class Job(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="jobs",
+    )
+    title = models.CharField(max_length=255)
+    company = models.CharField(max_length=255)
+    url = models.URLField()
+    description = models.TextField()
+
+    def __str__(self) -> str:
+        return f"{self.company} — {self.title}"
+```
+
+#### Why?
+
+We need a relationship like:
+
+```text
+User A
+ ├── Job 1
+ └── Job 2
+
+User B
+ ├── Job 3
+ └── Job 4
+```
+
+Without `user` on `Job`, Django has no way to know who owns a job.
+
+Same goes for `Application`:
+
+```python
+user = models.ForeignKey(
+    User,
+    on_delete=models.CASCADE,
+    related_name="applications",
+)
+```
+
+---
+
+### # 4. Create the migration
+
+Run:
+
+```bash
+python manage.py makemigrations
+```
+
+Then:
+
+```bash
+python manage.py migrate
+```
+
+#### Important
+
+If you already have jobs in your development database, Django may ask how to populate the new non-null `user` field.
+
+That's expected.
+
+Because we're still early in CareerPilot development, we have two options:
+
+#### Option A — Disposable development data
+
+If we don't care about the existing test jobs, reset the database and recreate them after authentication.
+
+#### Option B — Keep existing jobs
+
+Create a development user first and use that user as the default owner during the migration.
+
+For now, **Option A is simpler if your existing jobs are only test data.**
+
+Don't delete production data if/when this becomes a deployed application.
+
+---
+
+### 5. Create the authentication serializers
+
+User registration is an authentication/account concern, not a job concern.
+
+Let's create a django app for it called `accounts`.
+```shell
+uv run python manage.py startapp accounts
+```
+
+Register `accounts` app in Django project (`config/settings.py`)
+
+```python
+INSTALLED_APPS = [
+    ...
+    "rest_framework",
+    "rest_framework.authtoken",
+    "jobs",
+    "accounts",
+]
+```
+
+
+Create:
+
+```text
+backend/
+└── accounts/
+    ├── serializers.py
+    └── views.py
+```
+
+Add a registration serializer.
+
+```python
+from django.contrib.auth.models import User
+from rest_framework import serializers
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+    )
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password"]
+
+    def create(self, validated_data):
+        return User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data.get("email", ""),
+            password=validated_data["password"],
+        )
+```
+
+#### Important part
+
+Use:
+
+```python
+User.objects.create_user(...)
+```
+
+not:
+
+```python
+User.objects.create(...)
+```
+
+`create_user()` hashes the password.
+
+You should **never store the user's raw password**.
+
+---
+
+### 6. Create the registration view
+
+In `views.py`:
+
+```python
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
+
+from .serializers import RegisterSerializer
+
+
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.save()
+
+        return Response(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+```
+
+Notice that the response doesn't contain the password.
+
+---
+
+### 7. Add the registration URL
+
+In your app's `backend/accounts/urls.py`:
+
+```python
+from django.urls import path
+
+from .views import RegisterView
+
+urlpatterns = [
+    path("auth/register/", RegisterView.as_view(), name="register"),
+]
+```
+
+and finally register it in `backend/config/urls.py`
+```python
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("api/", include("jobs.urls")),
+    path("api/", include("accounts.urls")),
+]
+
+```
+
+Your endpoint is now:
+
+```text
+POST /api/auth/register/
+```
+
+assuming your project's main URL already includes your app under `/api/`.
+
+---
+
+### 8. Test registration before continuing
+
+Use Postman, Insomnia, curl, or your browser's API tooling.
+
+Request:
+
+```http
+POST /api/auth/register/
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+    "username": "usera",
+    "email": "usera@example.com",
+    "password": "password123"
+}
+```
+
+Expected:
+
+```text
+201 Created
+```
+
+Response:
+
+```json
+{
+    "id": 1,
+    "username": "usera",
+    "email": "usera@example.com"
+}
+```
+
+Then test duplicate username:
+
+```json
+{
+    "username": "usera",
+    "email": "another@example.com",
+    "password": "password123"
+}
+```
+
+Expected:
+
+```text
+400 Bad Request
+```
+Response:
+```json
+{
+    "username":["A user with that username already exists."]
+}
+```
+
+---
+
+### 9. Implement login
+
+Now create:
+
+```text
+POST /api/auth/login/
+```
+
+Use DRF's built-in token mechanism.
+
+In `views.py`:
+
+```python
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+
+class LoginView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        if not username or not password:
+            return Response(
+                {"detail": "Username and password are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = authenticate(
+            username=username,
+            password=password,
+        )
+
+        if user is None:
+            return Response(
+                {"detail": "Invalid username or password."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response(
+            {
+                "token": token.key,
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                },
+            }
+        )
+```
+
+The important sequence is:
+
+```text
+username + password
+        ↓
+authenticate()
+        ↓
+User
+        ↓
+get_or_create Token
+        ↓
+return token
+```
+
+---
+
+### 10. Add the login URL
+
+```python
+urlpatterns = [
+    path("auth/register/", RegisterView.as_view(), name="register"),
+    path("auth/login/", LoginView.as_view(), name="login"),
+]
+```
+
+Test:
+
+```http
+POST /api/auth/login/
+Content-Type: application/json
+```
+
+```json
+{
+    "username": "usera",
+    "password": "password123"
+}
+```
+
+Expected:
+
+```json
+{
+    "token": "abc123...",
+    "user": {
+        "id": 1,
+        "username": "usera",
+        "email": "usera@example.com"
+    }
+}
+```
+
+Save the token temporarily for testing.
+
+---
+
+### 11. Implement logout
+
+Create:
+
+```python
+from rest_framework.permissions import IsAuthenticated
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        request.auth.delete()
+
+        return Response(
+            {"detail": "Logged out successfully."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+```
+
+Add:
+
+```python
+path("auth/logout/", LogoutView.as_view(), name="logout"),
+```
+
+The request must contain:
+
+```http
+Authorization: Token abc123...
+```
+
+Logout deletes that token.
+
+#### What is `permission_classes`?
+```python
+permission_classes = [IsAuthenticated]
+```
+This tells Django REST Framework:
+
+> "Before allowing this view to run, make sure the request comes from an authenticated user."
+
+---
+
+### 12. Protect the Job API
+
+Now we get to the important security part.
+
+Change:
+
+```python
+class JobListView(generics.ListCreateAPIView):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+```
+
+to:
+
+```python
+from rest_framework.permissions import IsAuthenticated
+
+
+class JobListView(generics.ListCreateAPIView):
+    serializer_class = JobSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Job.objects.filter(
+            user=self.request.user
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+```
+
+#### Two important things are happening.
+
+##### Reading
+
+```python
+Job.objects.filter(user=self.request.user)
+```
+
+means:
+
+> Only return jobs owned by the authenticated user.
+
+##### Creating
+
+```python
+serializer.save(user=self.request.user)
+```
+
+means:
+
+> The server decides who owns the job.
+
+The frontend should **not** send:
+
+```json
+{
+    "user": 1
+}
+```
+
+The authenticated request determines the owner.
+
+---
+
+### 13. Protect `JobDetailView`
+
+Change:
+
+```python
+class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+```
+
+to:
+
+```python
+class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = JobSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Job.objects.filter(
+            user=self.request.user
+        )
+```
+
+This is what prevents the ID manipulation attack.
+
+Suppose:
+
+```text
+User A → Job 1
+User B → Job 2
+```
+
+User A requests:
+
+```text
+GET /api/jobs/2/
+```
+
+Django effectively searches:
+
+```python
+Job.objects.filter(
+    user=user_a,
+    id=2,
+)
+```
+
+No object exists.
+
+Result:
+
+```text
+404 Not Found
+```
+
+User A cannot retrieve User B's job.
+
+---
+
+### 14. Protect applications
+
+Current application view:
+
+```python
+class ApplicationListView(generics.ListAPIView):
+    serializer_class = ApplicationSerializer
+
+    def get_queryset(self):
+        queryset = Application.objects.select_related("job")
+
+        status = self.request.query_params.get("status")
+
+        if status:
+            queryset = queryset.filter(status=status)
+
+        return queryset
+```
+
+Change it to:
+
+```python
+class ApplicationListView(generics.ListAPIView):
+    serializer_class = ApplicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = (
+            Application.objects
+            .filter(user=self.request.user)
+            .select_related("job")
+        )
+
+        status = self.request.query_params.get("status")
+
+        if status:
+            queryset = queryset.filter(status=status)
+
+        return queryset
+```
+
+This means:
+
+```text
+GET /api/applications/
+```
+
+only returns the authenticated user's applications.
+
+And:
+
+```text
+GET /api/applications/?status=interview
+```
+
+only returns **that user's** interview applications.
+
+---
+
+### 15. Check serializer
+
+`JobSerializer` currently has:
+
+```python
+class JobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobPosting
+        fields = ["id", "title", "company", "url", "description"]
+```
+
+Keep `user` out of the fields.
+
+That is intentional.
+
+The client should not control ownership.
+
+---
+
+### 16. Add React authentication types
+
+Create:
+
+```text
+frontend/src/types/auth.ts
+```
+
+```ts
+export interface AuthUser {
+    id: number;
+    username: string;
+    email: string;
+}
+
+export interface LoginResponse {
+    token: string;
+    user: AuthUser;
+}
+
+export interface AuthState {
+    token: string | null;
+    user: AuthUser | null;
+    isAuthenticated: boolean;
+}
+```
+
+---
+
+### 17. Create the authentication API
+
+Create:
+
+```text
+frontend/src/api/auth.ts
+```
+
+Start with:
+
+```ts
+import type { LoginResponse } from "../types/auth";
+
+interface RegisterInput {
+    username: string;
+    email: string;
+    password: string;
+}
+
+export async function register(
+    input: RegisterInput,
+): Promise<void> {
+    const response = await fetch("/api/auth/register/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+        throw new Error("Registration failed");
+    }
+}
+
+export async function login(
+    username: string,
+    password: string,
+): Promise<LoginResponse> {
+    const response = await fetch("/api/auth/login/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            username,
+            password,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error("Login failed");
+    }
+
+    return response.json();
+}
+
+export async function logout(token: string): Promise<void> {
+    const response = await fetch("/api/auth/logout/", {
+        method: "POST",
+        headers: {
+            Authorization: `Token ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Logout failed");
+    }
+}
+```
+
+---
+
+### 18. Create `useAuth()`
+
+Create:
+
+```text
+frontend/src/hooks/useAuth.ts
+```
+
+For the MVP, keep it simple:
+
+```tsx
+import { useState } from "react";
+
+import { login, logout } from "../api/auth";
+import type { AuthUser } from "../types/auth";
+
+export function useAuth() {
+    const [token, setToken] = useState<string | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
+
+    async function handleLogin(
+        username: string,
+        password: string,
+    ) {
+        const data = await login(username, password);
+
+        setToken(data.token);
+        setUser(data.user);
+    }
+
+    async function handleLogout() {
+        if (token) {
+            await logout(token);
+        }
+
+        setToken(null);
+        setUser(null);
+    }
+
+    return {
+        token,
+        user,
+        handleLogin,
+        handleLogout,
+    };
+}
+```
+
+This is enough to understand the authentication concept.
+
+Later, we'll move this into a React Context so authentication state is available throughout the application.
+
+---
+
+### 19. Send the token with job requests
+
+Your current:
+
+```ts
+fetch("/api/jobs/")
+```
+
+needs authentication.
+
+For example:
+
+```ts
+export async function getJobs(
+    token: string,
+): Promise<Job[]> {
+    const response = await fetch("/api/jobs/", {
+        headers: {
+            Authorization: `Token ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch jobs");
+    }
+
+    return response.json();
+}
+```
+
+And POST:
+
+```ts
+export async function createJob(
+    token: string,
+    job: CreateJobInput,
+): Promise<Job> {
+    const response = await fetch("/api/jobs/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify(job),
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to create job");
+    }
+
+    return response.json();
+}
+```
+
+Instead of repeating this manually in every function. We can create an authenticated API helper.
+
+Create: `frontend/src/api/client.ts`
+```ts
+export async function apiFetch(
+    url: string,
+    token: string,
+    options: RequestInit = {},
+) {
+    return fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            Authorization: `Token ${token}`,
+        },
+    });
+}
+```
+
+Then authenticated APIs can use:
+
+```ts
+const response = await apiFetch("/api/auth/logout/", token, {
+    method: "POST",
+});
+```
+
+This centralizes the `Authorization` header instead of repeating it across every authenticated API call.
+
+---
+
+### 20. Manual security test
+
+This is one of the most important Day 5 tasks.
+
+Create two users:
+
+```text
+User A
+username: usera
+password: password123
+
+User B
+username: userb
+password: password123
+```
+
+Login as User A.
+
+Create:
+
+```text
+Job A
+```
+
+Login as User B.
+
+Create:
+
+```text
+Job B
+```
+
+You should have:
+
+```text
+User A
+└── Job A
+
+User B
+└── Job B
+```
+
+Now authenticate as User A and call:
+
+```text
+GET /api/jobs/
+```
+
+Expected:
+
+```json
+[
+    {
+        "id": 1,
+        "title": "Job A"
+    }
+]
+```
+
+It should **not** contain Job B.
+
+Now deliberately change the ID:
+
+```text
+GET /api/jobs/2/
+```
+
+Expected:
+
+```text
+404 Not Found
+```
+Response
+```json
+{
+    "detail":"No Job matches the given query."
+}
+```
+
+That verifies the actual security boundary.
+
+---
+
+### 21. Test authentication failures
+
+Test these.
+
+#### No authentication
+
+```http
+GET /api/jobs/
+```
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+#### Invalid token
+
+```http
+Authorization: Token fake-token
+```
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+#### Malformed authentication header
+
+```http
+Authorization: fake-token
+```
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+#### Missing username
+
+```json
+{
+    "password": "password123"
+}
+```
+
+Expected:
+
+```text
+400 Bad Request
+```
+
+#### Missing password
+
+```json
+{
+    "username": "usera"
+}
+```
+
+Expected:
+
+```text
+400 Bad Request
+```
+
+#### Wrong password
+
+```json
+{
+    "username": "usera",
+    "password": "wrong-password"
+}
+```
+
+Expected:
+
+```text
+401 Unauthorized
+```
+
+---
+
+### Authentication vs Authorization
+
+**Authentication** answers: "Who are you?"
+
+CareerPilot authenticates users using username/password credentials.
+After successful login, Django REST Framework issues an authentication token.
+The client sends that token with authenticated API requests.
+
+**Authorization** answers: "What are you allowed to access?"
+
+After authentication, CareerPilot restricts resources to the authenticated user.
+For example, a user can only retrieve, update, or delete their own jobs.
+
+Example:
+
+- Authentication: User logs in successfully and receives a token.
+- Authorization: `GET /api/jobs/` only returns jobs belonging to that user.
+
+---
+
+### Password Hashing vs Encryption
+
+**Hashing** is one-way. A password is transformed into a hash that cannot
+normally be reversed to recover the original password.
+
+Django hashes passwords before storing them in the database. During login,
+Django hashes/verifies the supplied password against the stored hash.
+
+**Encryption** is reversible. Data is encrypted using a key and can later
+be decrypted.
+
+Passwords should be hashed, not encrypted, because the application should
+never need to recover the user's original (plain-text) password.
+
+---
+
+### Identify 3 User-Controlled Inputs
+
+#### A. Registration
+
+```text
+POST /api/auth/register/
+```
+
+User controls:
+
+```text
+username
+email
+password
+```
+
+**Server-side validation:** `RegisterSerializer`.
+
+Make sure it validates required fields, valid email, password requirements,   and duplicate username/email as appropriate.
+
+```python
+class RegisterSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+    )
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password"]
+
+    def create(self, validated_data):
+        return User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+        )
+```
+
+> [!NOTE] 
+> Overriding serializer validation is not required here. 
+- Password:  Minimum lenght 8
+- Email: `serializers.EmailField()` ensures invalid input like `"hello"` is rejected server-side.
+
+#### B. Job creation/update
+
+```html
+POST /api/jobs/
+PATCH /api/jobs/<id>/
+```
+
+User controls:
+
+```text
+title
+company
+url
+description
+```
+
+**Server-side validation:** `JobSerializer`.
+
+For example:
+
+```python
+class JobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Job
+        fields = ["id", "title", "company", "url", "description"]
+
+    def validate_title(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Title cannot be empty.")
+        return value
+
+    def validate_company(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Company cannot be empty.")
+        return value
+```
+
+>[!NOTE]
+> We override default serializer validation here using 
+> ```python
+> validate_<field_name>(self, value)
+> ```` 
+
+Your `URLField` already provides useful URL validation.
+
+#### C. Application status/filter
+
+```text
+GET /api/applications/?status=...
+```
+
+User controls the `status` query parameter.
+
+Your backend should only accept valid `JobStatus` values.
+
+Since your model uses Django `choices`, explicitly validate it:
+
+**Server-side validation:** `ApplicationListView`.
+
+```python
+from rest_framework.exceptions import ValidationError
+
+...
+status = self.request.query_params.get("status")
+
+if status and status not in Application.Status.values:
+    raise ValidationError({"status": "Invalid application status."})
+```
+
+---
+
+#### AI API Key Security
+
+CareerPilot does not currently integrate an AI provider, so there is no AI
+API key in the application yet.
+
+When AI integration is implemented, the API key will:
+- Be stored only on the Django backend/server environment.
+- Never be sent to or stored in the React client.
+- Never be committed to Git.
+- Be accessed through environment variables or deployment secrets.
+
+Architecture:
+``` text
+React → Django API → AI Provider
+```

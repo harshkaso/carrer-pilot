@@ -1,10 +1,10 @@
 from rest_framework import serializers  # type: ignore
-from .models import JobApplication, JobPosting
+from .models import Application, Job
 
 
-class JobPostingSerializer(serializers.ModelSerializer):
+class JobSerializer(serializers.ModelSerializer):
     class Meta:
-        model = JobPosting
+        model = Job
         fields = [
             "id",  # Django automatically adds a primary-key field `id` in the model if you haven't define one yourself.
             "title",
@@ -13,15 +13,23 @@ class JobPostingSerializer(serializers.ModelSerializer):
             "description",
         ]
 
+    def validate_title(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Title cannot be empty.")
 
-class JobApplicationSerializer(serializers.ModelSerializer):
-    job_posting = JobPostingSerializer(read_only=True)
+    def validate_company(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Company cannot be empty.")
+
+
+class ApplicationSerializer(serializers.ModelSerializer):
+    Job = JobSerializer(read_only=True)
 
     class Meta:
-        model = JobApplication
+        model = Application
         fields = [
             "id",
-            "job_posting",
+            "job",
             "status",
             "created_at",
             "updated_at",

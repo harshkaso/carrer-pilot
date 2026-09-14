@@ -1,15 +1,15 @@
 from django.contrib import admin  # type: ignore
 
 # Register your models here.
-from .models import JobApplication, JobPosting
+from .models import Application, Job
 
 
-@admin.register(JobPosting)
-class JobPostingAdmin(admin.ModelAdmin):
+@admin.register(Job)
+class JobAdmin(admin.ModelAdmin):
     list_display = ("title", "company", "url")  # data fields to show in admin
 
 
-@admin.register(JobApplication)
-class JobApplicationAdmin(admin.ModelAdmin):
-    list_display = ("job_posting", "status", "created_at", "updated_at")
+@admin.register(Application)
+class ApplicationAdmin(admin.ModelAdmin):
+    list_display = ("job", "status", "created_at", "updated_at")
     list_filter = ("status",)  # allow filtering entries by status
